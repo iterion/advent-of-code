@@ -1,9 +1,8 @@
-use std::fs;
 use std::error::Error;
 use regex::Regex;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let input_string = fs::read_to_string("inputs/day01.txt")?;
+    let input_string = include_str!("../../inputs/day01.txt");
     let answer_part_1: usize = input_string.split('\n').filter(|s| s.len() != 0).into_iter().map(|s| {
         let mut digits = s.chars().filter(|c| c.is_ascii_digit());
         let first = digits.next().unwrap();
@@ -26,7 +25,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn parse_all_lines_v2(lines: String) -> usize {
+fn parse_all_lines_v2(lines: &str) -> usize {
     lines.split('\n').filter(|s| s.len() != 0).into_iter().map(calibration_line_to_number).sum()
 }
 
