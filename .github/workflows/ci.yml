@@ -10,10 +10,8 @@ jobs:
     name: Check all
     runs-on: ubuntu-22.04
     steps:
-      - name: git checkout
-        uses: actions/checkout@v4
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@main
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
       - uses: DeterminateSystems/magic-nix-cache-action@main
       - name: Check Nixpkgs inputs
         uses: DeterminateSystems/flake-checker-action@main
@@ -24,6 +22,10 @@ jobs:
         run: |
           nix develop --command \
             cargo fmt --check
+      - name: Check Clippy
+        run: |
+          nix develop --command \
+            cargo clippy
       - name: Audit Rust code
         run: |
           nix develop --command \
@@ -37,21 +39,10 @@ jobs:
         os: [ubuntu-22.04, macos-12]
     runs-on: ubuntu-22.04
     steps:
-      - name: git checkout
-        uses: actions/checkout@v4
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@main
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
       - uses: DeterminateSystems/magic-nix-cache-action@main
-      - name: Set up Rust cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: aoc-${{ hashFiles('**/Cargo.lock') }}
+      - uses: Swatinem/rust-cache@v2
       - name: Test
         run: |
           nix develop --command \
