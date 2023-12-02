@@ -60,5 +60,5 @@ jobs:
       - name: Build
         run: nix build .#advent-of-code
 
-      - name: Build TODOs Docker image
+      - name: Docker image
         run: nix build .#docker
