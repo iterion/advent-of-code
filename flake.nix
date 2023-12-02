@@ -94,6 +94,20 @@
           };
           release = true;
         };
+
+        docker =
+          let
+            bin = "${advent-of-code}/bin/${name}";
+          in
+          pkgs.dockerTools.buildLayeredImage {
+            inherit name;
+            tag = "v${version}";
+
+            config = {
+              Entrypoint = [ bin ];
+              ExposedPorts."8080/tcp" = { };
+            };
+          };
       });
     };
 }
