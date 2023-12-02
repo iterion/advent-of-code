@@ -40,12 +40,18 @@
         default = pkgs.mkShell {
           # The Nix packages provided in the environment
           packages = (with pkgs; [
-            # The package provided by our custom overlay. Includes cargo, Clippy, cargo-fmt,
-            # rustdoc, rustfmt, and other tools.
             rustToolchain
             aoc-cli
             pkg-config
             openssl
+            cargo-deny
+
+            cargo-edit
+            cargo-watch
+
+            # Spelling and linting
+            codespell
+            eclint
           ]) ++ pkgs.lib.optionals pkgs.stdenv.isDarwin (with pkgs; [
             libiconv 
             darwin.apple_sdk.frameworks.Security
