@@ -2,8 +2,9 @@ use std::error::Error;
 const MAX_RED: usize = 12;
 const MAX_GREEN: usize = 13;
 const MAX_BLUE: usize = 14;
-fn main() -> Result<(), Box<dyn Error>> {
-    let input_string = include_str!("../../inputs/day02.txt");
+
+pub(crate) fn run() -> Result<(), Box<dyn Error>> {
+    let input_string = include_str!("../inputs/day02.txt");
     let answer_part_1 = sum_all_possible_games(input_string);
     let answer_part_2 = sum_all_possible_line_powers(input_string);
     println!("answer_part_1: {answer_part_1:?}");
@@ -88,7 +89,9 @@ fn is_valid_color(draw: &str) -> bool {
     num <= color_limit
 }
 
+#[cfg(test)]
 mod tests {
+    use crate::day02::{sum_all_possible_games, get_min_for_colors, are_games_possible, is_game_possible, sum_all_possible_line_powers, parse_game_row, get_row_power};
     #[test]
     fn test_all_lines() {
         let lines = r#"Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
@@ -97,18 +100,18 @@ Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
 Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
 Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green"#;
 
-        assert_eq!(crate::sum_all_possible_games(&lines), 8);
-        assert_eq!(crate::sum_all_possible_line_powers(&lines), 2286);
+        assert_eq!(sum_all_possible_games(&lines), 8);
+        assert_eq!(sum_all_possible_line_powers(&lines), 2286);
     }
 
     #[test]
     fn test_parse_game_row() {
         assert_eq!(
-            crate::parse_game_row("Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green"),
+            parse_game_row("Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green"),
             1
         );
         assert_eq!(
-            crate::parse_game_row(
+            parse_game_row(
                 "Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red"
             ),
             0
@@ -118,11 +121,11 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green"#;
     #[test]
     fn test_get_row_powers() {
         assert_eq!(
-            crate::get_row_power("Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green"),
+            get_row_power("Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green"),
             48
         );
         assert_eq!(
-            crate::get_row_power(
+            get_row_power(
                 "Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red"
             ),
             1560
@@ -132,11 +135,11 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green"#;
     #[test]
     fn test_get_min_for_colors() {
         assert_eq!(
-            crate::get_min_for_colors("3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green"),
+            get_min_for_colors("3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green"),
             (4, 2, 6)
         );
         assert_eq!(
-            crate::get_min_for_colors(
+            get_min_for_colors(
                 "8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red"
             ),
             (20, 13, 6)
@@ -145,17 +148,17 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green"#;
 
     #[test]
     fn test_are_games_possible() {
-        assert!(crate::are_games_possible(
+        assert!(are_games_possible(
             "3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green"
         ));
-        assert!(!crate::are_games_possible(
+        assert!(!are_games_possible(
             "8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red"
         ));
     }
 
     #[test]
     fn test_is_game_possible() {
-        assert!(crate::is_game_possible("3 blue, 4 red"));
-        assert!(!crate::is_game_possible("8 green, 6 blue, 20 red"));
+        assert!(is_game_possible("3 blue, 4 red"));
+        assert!(!is_game_possible("8 green, 6 blue, 20 red"));
     }
 }

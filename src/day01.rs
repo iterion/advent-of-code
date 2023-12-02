@@ -1,8 +1,8 @@
 use regex::Regex;
 use std::error::Error;
 
-fn main() -> Result<(), Box<dyn Error>> {
-    let input_string = include_str!("../../inputs/day01.txt");
+pub(crate) fn run() -> Result<(), Box<dyn Error>> {
+    let input_string = include_str!("../inputs/day01.txt");
     let answer_part_1: usize = input_string
         .split('\n')
         .filter(|s| s.len() != 0)
@@ -114,7 +114,9 @@ fn parse_word_digits_safely(cal_val: &str) -> String {
         .replace("nine", "9")
 }
 
+#[cfg(test)]
 mod tests {
+    use crate::day01::parse_all_lines_v2;
     #[test]
     fn test_parse_calibration_line() {
         let lines = r#"
@@ -127,14 +129,14 @@ zoneight234
 7pqrstsixteen
 "#;
 
-        assert_eq!(crate::parse_all_lines_v2(lines), 281);
+        assert_eq!(parse_all_lines_v2(lines), 281);
         let lines = r#"
 1abc2
 pqr3stu8vwx
 a1b2c3d4e5f
 treb7uchet
 "#;
-        assert_eq!(crate::parse_all_lines_v2(lines), 142);
-        assert_eq!(crate::parse_all_lines_v2("eighthree"), 83);
+        assert_eq!(parse_all_lines_v2(lines), 142);
+        assert_eq!(parse_all_lines_v2("eighthree"), 83);
     }
 }
