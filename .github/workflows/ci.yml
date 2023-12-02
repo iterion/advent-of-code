@@ -1,0 +1,70 @@
+name: Check and build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+jobs:
+  check:
+    name: Check all
+    runs-on: ubuntu-22.04
+    steps:
+      - name: git checkout
+        uses: actions/checkout@v4
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: Check Nixpkgs inputs
+        uses: DeterminateSystems/flake-checker-action@main
+        with:
+          fail-mode: true
+
+      - name: Check Rust formatting
+        run: |
+          nix develop --command \
+            cargo fmt --check
+      - name: Audit Rust code
+        run: |
+          nix develop --command \
+            cargo-deny check
+
+  build_and_test:
+    name: Test and build
+    needs: check_nix
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, macos-12]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: git checkout
+        uses: actions/checkout@v4
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: Set up Rust cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: aoc-${{ hashFiles('**/Cargo.lock') }}
+      - name: Test
+        run: |
+          nix develop --command \
+            cargo test
+      - name: Build
+        # nix build would also work here because `todos` is the default package
+        run: nix build .#todos
+
+      # I don't talk about this in the blog post so consider it an Easter egg.
+      # You can indeed use Nix to build Docker containers without any need for
+      # a Dockerfile. For more info, see:
+      # https://nix.dev/tutorials/building-and-running-docker-images
+      # https://github.com/the-nix-way/nix-docker-examples/
+      # https://github.com/NixOS/nixpkgs/blob/master/pkgs/build-support/docker/examples.nix
+      - name: Build TODOs Docker image
+        run: nix build .#docker
