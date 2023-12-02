@@ -10,14 +10,16 @@
   # Flake outputs
   outputs = { self, nixpkgs, rust-overlay }:
     let
-      # Overlays enable you to customize the Nixpkgs attribute set
+      meta = (builtins.fromTOML (builtins.readFile ./Cargo.toml)).package;
+      inherit (meta) name version;
+
       overlays = [
         # Makes a `rust-bin` attribute available in Nixpkgs
         (import rust-overlay)
         # Provides a `rustToolchain` attribute for Nixpkgs that we can use to
         # create a Rust environment
         (self: super: {
-          rustToolchain = super.rust-bin.stable.latest.default;
+          rustToolchain = super.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
         })
       ];
 
@@ -32,13 +34,34 @@
       # Helper to provide system-specific attributes
       forAllSystems = f: nixpkgs.lib.genAttrs allSystems (system: f {
         pkgs = import nixpkgs { inherit overlays system; };
+
+        # runCiLocally = builtins.writeScriptBin "ci-local" ''
+        #   echo "Checking Rust formatting..."
+        #   cargo fmt --check
+
+        #   echo "Auditing Rust dependencies..."
+        #   cargo-deny check
+
+        #   echo "Auditing editorconfig conformance..."
+        #   eclint -exclude "Cargo.lock"
+
+        #   echo "Checking spelling..."
+        #   codespell \
+        #     --skip target,.git \
+        #     --ignore-words-list crate
+
+        #   echo "Testing Rust code..."
+        #   cargo test
+
+        #   echo "Building bin..."
+        #   nix build .#advent-of-code
+        # '';
       });
     in
     {
       # Development environment output
       devShells = forAllSystems ({ pkgs }: {
         default = pkgs.mkShell {
-          # The Nix packages provided in the environment
           packages = (with pkgs; [
             rustToolchain
             aoc-cli
@@ -58,5 +81,16 @@
           ]);
         };
       });
+
+      packages = rec {
+        default = advent-of-code;
+
+        advent-of-code = builtins.rustPlatform.buildRustPackage {
+          pname = name;
+          inherit version;
+          src = ./.;
+          release = true;
+        };
+      };
     };
 }
