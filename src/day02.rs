@@ -13,7 +13,7 @@ pub(crate) fn run() -> Result<(), Box<dyn Error>> {
 }
 
 fn get_row_power(lines: &str) -> usize {
-    let mut game_split = lines.split(":");
+    let mut game_split = lines.split(':');
     let game = game_split.next().unwrap();
     let value = game_split.next().unwrap().trim();
     let possible = get_min_for_colors(value);
@@ -23,10 +23,10 @@ fn get_row_power(lines: &str) -> usize {
 
 fn get_min_for_colors(line: &str) -> (usize, usize, usize) {
     let mut colors = (0, 0, 0);
-    let mut drawings = line.split(";");
-    while let Some(drawing) = drawings.next() {
-        let mut color_values = drawing.split(",");
-        while let Some(color_value) = color_values.next() {
+    let drawings = line.split(';');
+    for drawing in drawings {
+        let color_values = drawing.split(',');
+        for color_value in color_values {
             let mut splits = color_value.split_whitespace();
             let num: usize = splits.next().unwrap().parse().unwrap();
             match splits.next().unwrap() {
@@ -49,7 +49,7 @@ fn sum_all_possible_games(lines: &str) -> usize {
 }
 
 fn parse_game_row(lines: &str) -> usize {
-    let mut game_split = lines.split(":");
+    let mut game_split = lines.split(':');
     let game = get_game_value(game_split.next().unwrap());
     let value = game_split.next().unwrap().trim();
     let possible = are_games_possible(value);
@@ -70,11 +70,11 @@ fn get_game_value(game_value: &str) -> usize {
 }
 
 fn are_games_possible(line: &str) -> bool {
-    line.split(";").all(is_game_possible)
+    line.split(';').all(is_game_possible)
 }
 
 fn is_game_possible(line: &str) -> bool {
-    line.splitn(3, ",").all(is_valid_color)
+    line.splitn(3, ',').all(is_valid_color)
 }
 
 fn is_valid_color(draw: &str) -> bool {
@@ -103,8 +103,8 @@ Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
 Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
 Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green"#;
 
-        assert_eq!(sum_all_possible_games(&lines), 8);
-        assert_eq!(sum_all_possible_line_powers(&lines), 2286);
+        assert_eq!(sum_all_possible_games(lines), 8);
+        assert_eq!(sum_all_possible_line_powers(lines), 2286);
     }
 
     #[test]

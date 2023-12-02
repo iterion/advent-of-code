@@ -5,16 +5,15 @@ pub(crate) fn run() -> Result<(), Box<dyn Error>> {
     let input_string = include_str!("../inputs/day01.txt");
     let answer_part_1: usize = input_string
         .split('\n')
-        .filter(|s| s.len() != 0)
-        .into_iter()
+        .filter(|s| !s.is_empty())
         .map(|s| {
             let mut digits = s.chars().filter(|c| c.is_ascii_digit());
             let first = digits.next().unwrap();
             let maybe_last = digits.last();
-            let last = if maybe_last.is_none() {
-                first.clone()
+            let last = if let Some(last) = maybe_last {
+                last
             } else {
-                maybe_last.unwrap()
+                first
             };
             let num: usize = if let Ok(num) = format!("{first}{last}").parse() {
                 num
@@ -33,8 +32,7 @@ pub(crate) fn run() -> Result<(), Box<dyn Error>> {
 fn parse_all_lines_v2(lines: &str) -> usize {
     lines
         .split('\n')
-        .filter(|s| s.len() != 0)
-        .into_iter()
+        .filter(|s| !s.is_empty())
         .map(calibration_line_to_number)
         .sum()
 }
@@ -47,10 +45,10 @@ fn calibration_line_to_number(line: &str) -> usize {
     let digits2 = digits.clone();
     let first = digits.next().unwrap();
     let maybe_last = digits.last();
-    let last = if maybe_last.is_none() {
-        first.clone()
+    let last = if let Some(last) = maybe_last {
+        last
     } else {
-        maybe_last.unwrap()
+        first
     };
     let str_version = format!("{first}{last}");
     println!(
