@@ -91,7 +91,10 @@ fn is_valid_color(draw: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use crate::day02::{sum_all_possible_games, get_min_for_colors, are_games_possible, is_game_possible, sum_all_possible_line_powers, parse_game_row, get_row_power};
+    use crate::day02::{
+        are_games_possible, get_min_for_colors, get_row_power, is_game_possible, parse_game_row,
+        sum_all_possible_games, sum_all_possible_line_powers,
+    };
     #[test]
     fn test_all_lines() {
         let lines = r#"Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
@@ -139,9 +142,7 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green"#;
             (4, 2, 6)
         );
         assert_eq!(
-            get_min_for_colors(
-                "8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red"
-            ),
+            get_min_for_colors("8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red"),
             (20, 13, 6)
         );
     }

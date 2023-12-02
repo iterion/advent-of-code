@@ -27,12 +27,10 @@ fn main() {
             println!("bootstrapping day {day}!")
             // aoc --day 1 --overwrite --input-file inputs/day01.txt --puzzle-file puzzles/day01.md download
         }
-        Commands::PrintPuzzleOutput { day } => {
-            match day {
-                1 => day01::run().unwrap(),
-                2 => day02::run().unwrap(),
-                _ => panic!("no such day"),
-            }
-        }
+        Commands::PrintPuzzleOutput { day } => match day {
+            1 => day01::run().unwrap(),
+            2 => day02::run().unwrap(),
+            _ => panic!("no such day"),
+        },
     }
 }
