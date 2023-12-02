@@ -31,7 +31,7 @@ jobs:
 
   build_and_test:
     name: Test and build
-    needs: check_nix
+    needs: check
     strategy:
       matrix:
         os: [ubuntu-22.04, macos-12]
