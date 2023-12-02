@@ -82,15 +82,18 @@
         };
       });
 
-      packages = rec {
+      packages = forAllSystems({ pkgs }: rec {
         default = advent-of-code;
 
-        advent-of-code = builtins.rustPlatform.buildRustPackage {
+        advent-of-code = pkgs.rustPlatform.buildRustPackage {
           pname = name;
           inherit version;
           src = ./.;
+          cargoLock = {
+            lockFile = ./Cargo.lock;
+          };
           release = true;
         };
-      };
+      });
     };
 }
