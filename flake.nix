@@ -3,7 +3,7 @@
 
   # Flake inputs
   inputs = {
-    nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.2305.491812.tar.gz";
+    nixpkgs.url = "nixpkgs";
     rust-overlay.url = "github:oxalica/rust-overlay"; # A helper for Rust + Nix
   };
 
@@ -43,9 +43,9 @@
             # The package provided by our custom overlay. Includes cargo, Clippy, cargo-fmt,
             # rustdoc, rustfmt, and other tools.
             rustToolchain
+            aoc-cli
             pkg-config
             openssl
-	          mysql-client
           ]) ++ pkgs.lib.optionals pkgs.stdenv.isDarwin (with pkgs; [
             libiconv 
             darwin.apple_sdk.frameworks.Security
