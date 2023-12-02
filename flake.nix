@@ -1,5 +1,5 @@
 {
-  description = "api-deux development environment";
+  description = "advent-of-code dev environment";
 
   # Flake inputs
   inputs = {
