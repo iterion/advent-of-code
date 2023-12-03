@@ -1,6 +1,6 @@
 use lazy_static::lazy_static;
-use std::collections::HashMap;
 use regex::Regex;
+use std::collections::HashMap;
 use std::error::Error;
 
 lazy_static! {
@@ -17,7 +17,11 @@ pub(crate) fn run() -> Result<(), Box<dyn Error>> {
 }
 
 fn answer_part_1(lines: &str) -> usize {
-    let rows = lines.lines().enumerate().map(|(i, line)| get_schematic_values(i, line)).collect::<Vec<Vec<SchematicValue>>>();
+    let rows = lines
+        .lines()
+        .enumerate()
+        .map(|(i, line)| get_schematic_values(i, line))
+        .collect::<Vec<Vec<SchematicValue>>>();
     println!("{rows:?}");
     let mut symbols: HashMap<usize, Vec<Symbol>> = HashMap::new();
     let mut parts: HashMap<usize, Vec<PartNumber>> = HashMap::new();
@@ -30,14 +34,14 @@ fn answer_part_1(lines: &str) -> usize {
                     } else {
                         symbols.insert(s.row, vec![s.clone()]);
                     }
-                },
+                }
                 SchematicValue::PartNumber(ref p) => {
                     if let Some(r) = parts.get_mut(&p.row) {
                         r.push(p.clone());
                     } else {
                         parts.insert(p.row, vec![p.clone()]);
                     }
-                },
+                }
             };
         }
     }
@@ -47,14 +51,14 @@ fn answer_part_1(lines: &str) -> usize {
             let mut relevant_symbols = vec![];
             // don't include if first row
             if i != &0 {
-                if let Some(s) = symbols.get(&(i-1)) {
+                if let Some(s) = symbols.get(&(i - 1)) {
                     relevant_symbols.append(&mut s.clone())
                 }
             }
             if let Some(s) = symbols.get(i) {
                 relevant_symbols.append(&mut s.clone())
             }
-            if let Some(s) = symbols.get(&(i+1)) {
+            if let Some(s) = symbols.get(&(i + 1)) {
                 relevant_symbols.append(&mut s.clone())
             }
             relevant_symbols
@@ -63,9 +67,12 @@ fn answer_part_1(lines: &str) -> usize {
             let mut part_number_valid = false;
             for symbol in &relevant_symbols.clone() {
                 if part.start.saturating_sub(1) <= symbol.start && symbol.start <= part.end + 1 {
-                    println!("found! row: {}, part: {}, sym_row: {}, {} <= {} <= {}", part.row, part.number, symbol.row, part.start, symbol.start, part.end);
+                    println!(
+                        "found! row: {}, part: {}, sym_row: {}, {} <= {} <= {}",
+                        part.row, part.number, symbol.row, part.start, symbol.start, part.end
+                    );
                     part_number_valid = true;
-                    break
+                    break;
                 }
             }
             if part_number_valid {
@@ -77,7 +84,11 @@ fn answer_part_1(lines: &str) -> usize {
 }
 
 fn answer_part_2(lines: &str) -> usize {
-    let rows = lines.lines().enumerate().map(|(i, line)| get_schematic_values(i, line)).collect::<Vec<Vec<SchematicValue>>>();
+    let rows = lines
+        .lines()
+        .enumerate()
+        .map(|(i, line)| get_schematic_values(i, line))
+        .collect::<Vec<Vec<SchematicValue>>>();
     let mut gears: HashMap<usize, Vec<Symbol>> = HashMap::new();
     let mut parts: HashMap<usize, Vec<PartNumber>> = HashMap::new();
     for row_items in rows {
@@ -91,14 +102,14 @@ fn answer_part_2(lines: &str) -> usize {
                             gears.insert(s.row, vec![s.clone()]);
                         }
                     }
-                },
+                }
                 SchematicValue::PartNumber(ref p) => {
                     if let Some(r) = parts.get_mut(&p.row) {
                         r.push(p.clone());
                     } else {
                         parts.insert(p.row, vec![p.clone()]);
                     }
-                },
+                }
             };
         }
     }
@@ -108,14 +119,14 @@ fn answer_part_2(lines: &str) -> usize {
             let mut relevant_symbols = vec![];
             // don't include if first row
             if i != &0 {
-                if let Some(p) = parts.get(&(i-1)) {
+                if let Some(p) = parts.get(&(i - 1)) {
                     relevant_symbols.append(&mut p.clone())
                 }
             }
             if let Some(p) = parts.get(i) {
                 relevant_symbols.append(&mut p.clone())
             }
-            if let Some(p) = parts.get(&(i+1)) {
+            if let Some(p) = parts.get(&(i + 1)) {
                 relevant_symbols.append(&mut p.clone())
             }
             relevant_symbols
@@ -124,7 +135,10 @@ fn answer_part_2(lines: &str) -> usize {
             let mut related_parts = vec![];
             for part in &relevant_parts.clone() {
                 if part.start.saturating_sub(1) <= gear.start && gear.start <= part.end + 1 {
-                    println!("found! row: {}, part: {}, sym_row: {}, {} <= {} <= {}", part.row, part.number, gear.row, part.start, gear.start, part.end);
+                    println!(
+                        "found! row: {}, part: {}, sym_row: {}, {} <= {} <= {}",
+                        part.row, part.number, gear.row, part.start, gear.start, part.end
+                    );
                     related_parts.push(part.clone());
                 }
             }
@@ -146,27 +160,35 @@ fn get_schematic_values(row: usize, line: &str) -> Vec<SchematicValue> {
         .find_iter(line)
         .map(|val| {
             let s = val.as_str();
-            if s.starts_with('*') ||
-                s.starts_with('#') ||
-                s.starts_with('+') ||
-                s.starts_with('&') ||
-                s.starts_with('$') ||
-                s.starts_with('-') ||
-                s.starts_with('+') ||
-                s.starts_with('%') ||
-                s.starts_with('@') ||
-                s.starts_with('=') ||
-                s.starts_with('/')
+            if s.starts_with('*')
+                || s.starts_with('#')
+                || s.starts_with('+')
+                || s.starts_with('&')
+                || s.starts_with('$')
+                || s.starts_with('-')
+                || s.starts_with('+')
+                || s.starts_with('%')
+                || s.starts_with('@')
+                || s.starts_with('=')
+                || s.starts_with('/')
             {
-                SchematicValue::Symbol(Symbol { row, symbol: s.chars().next().unwrap(), start: val.start() })
+                SchematicValue::Symbol(Symbol {
+                    row,
+                    symbol: s.chars().next().unwrap(),
+                    start: val.start(),
+                })
             } else {
                 let num: usize = match s.parse() {
                     Ok(n) => n,
                     Err(_) => panic!("did not expect number {s}"),
                 };
-                SchematicValue::PartNumber(PartNumber { row, number: num, start: val.start(), end: val.end() - 1 })
+                SchematicValue::PartNumber(PartNumber {
+                    row,
+                    number: num,
+                    start: val.start(),
+                    end: val.end() - 1,
+                })
             }
-
         })
         .collect()
 }
@@ -179,23 +201,24 @@ enum SchematicValue {
 
 #[derive(Debug, PartialEq, Clone)]
 struct PartNumber {
-        row: usize,
-        number: usize,
-        start: usize,
-        end: usize,
+    row: usize,
+    number: usize,
+    start: usize,
+    end: usize,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 struct Symbol {
-        row: usize,
-        symbol: char,
-        start: usize,
+    row: usize,
+    symbol: char,
+    start: usize,
 }
 
 #[cfg(test)]
 mod tests {
     use crate::day03::{
-        answer_part_1, answer_part_2, get_input_string, get_schematic_values, SchematicValue, PartNumber, Symbol,
+        answer_part_1, answer_part_2, get_input_string, get_schematic_values, PartNumber,
+        SchematicValue, Symbol,
     };
     #[test]
     fn test_all_lines() {
