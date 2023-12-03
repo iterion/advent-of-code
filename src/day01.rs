@@ -1,5 +1,11 @@
+use lazy_static::lazy_static;
 use regex::Regex;
 use std::error::Error;
+
+lazy_static! {
+    static ref RE: Regex = Regex::new("one|two|three|four|five|six|seven|eight|nine")
+        .expect("failed to compile regex");
+}
 
 pub(crate) fn run() -> Result<(), Box<dyn Error>> {
     let input_string = include_str!("../inputs/day01.txt");
@@ -63,13 +69,11 @@ fn calibration_line_to_number(line: &str) -> usize {
 }
 
 fn parse_word_digits_with_dupes(cal_val: &str) -> String {
-    let re = Regex::new("one|two|three|four|five|six|seven|eight|nine")
-        .expect("failed to compile regex");
     let mut prev_end = 0;
     let mut cur_index = 0;
     let original_length = cal_val.len();
     let mut replaced_string = cal_val.to_owned();
-    while let Some(match_val) = re.find_at(cal_val, cur_index) {
+    while let Some(match_val) = RE.find_at(cal_val, cur_index) {
         let (start_index, end_index) = (match_val.start(), match_val.end());
         let offset = original_length - replaced_string.len();
         println!(
