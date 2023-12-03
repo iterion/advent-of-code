@@ -4,7 +4,7 @@ use regex::Regex;
 use std::error::Error;
 
 lazy_static! {
-    static ref SCHEMATIC_RE: Regex = Regex::new(r"(\d+)|([\*$&\#\-=+%/@])").unwrap();
+    static ref SCHEMATIC_RE: Regex = Regex::new(r"(\d+)|([\*$&\#\-=\+%/@])").unwrap();
 }
 
 pub(crate) fn run() -> Result<(), Box<dyn Error>> {
@@ -17,43 +17,63 @@ pub(crate) fn run() -> Result<(), Box<dyn Error>> {
 }
 
 fn answer_part_1(lines: &str) -> usize {
-    let rows = lines.lines().enumerate().map(|(i, line)| get_schematic_values(i, line));
-    let mut symbols: HashMap<usize, Vec<SchematicValue>> = HashMap::new();
-    let mut parts: HashMap<usize, Vec<SchematicValue>> = HashMap::new();
+    let rows = lines.lines().enumerate().map(|(i, line)| get_schematic_values(i, line)).collect::<Vec<Vec<SchematicValue>>>();
+    println!("{rows:?}");
+    let mut symbols: HashMap<usize, Vec<Symbol>> = HashMap::new();
+    let mut parts: HashMap<usize, Vec<PartNumber>> = HashMap::new();
     for row_items in rows {
         for value in row_items {
             match value {
                 SchematicValue::Symbol(ref s) => {
                     if let Some(r) = symbols.get_mut(&s.row) {
-                        r.push(value);
+                        r.push(s.clone());
                     } else {
-                        symbols.insert(s.row, vec![value]);
+                        symbols.insert(s.row, vec![s.clone()]);
                     }
                 },
                 SchematicValue::PartNumber(ref p) => {
                     if let Some(r) = parts.get_mut(&p.row) {
-                        r.push(value);
+                        r.push(p.clone());
                     } else {
-                        parts.insert(p.row, vec![value]);
+                        parts.insert(p.row, vec![p.clone()]);
                     }
                 },
             };
         }
     }
+    let mut running_part_total = 0;
     for (i, part_list) in parts.iter() {
-        let mut relevant_symbols = vec![];
-        if let Some(s) = symbols.get_mut(&(i-1)) {
-            relevant_symbols.append(s)
-        }
-        //let this_row_symbols = symbols.get(i).unwrap_or(&vec![]);
-        //let next_row_symbols = symbols.get(&(i+1)).unwrap_or(&vec![]);
+        let relevant_symbols = {
+            let mut relevant_symbols = vec![];
+            // don't include if first row
+            if i != &0 {
+                if let Some(s) = symbols.get(&(i-1)) {
+                    relevant_symbols.append(&mut s.clone())
+                }
+            }
+            if let Some(s) = symbols.get(i) {
+                relevant_symbols.append(&mut s.clone())
+            }
+            if let Some(s) = symbols.get(&(i+1)) {
+                relevant_symbols.append(&mut s.clone())
+            }
+            relevant_symbols
+        };
         for part in part_list {
-            for symbol in &relevant_symbols {
+            let mut part_number_valid = false;
+            for symbol in &relevant_symbols.clone() {
+                if part.start.saturating_sub(1) <= symbol.start && symbol.start <= part.end + 1 {
+                    println!("found! row: {}, part: {}, sym_row: {}, {} <= {} <= {}", part.row, part.number, symbol.row, part.start, symbol.start, part.end);
+                    part_number_valid = true;
+                    break
+                }
+            }
+            if part_number_valid {
+                running_part_total += part.number;
             }
         }
     }
-    //println!("{values:?}");
-    0
+    running_part_total
 }
 
 fn answer_part_2(_lines: &str) -> usize {
@@ -179,6 +199,21 @@ mod tests {
             SchematicValue::Symbol(Symbol {
                 row: 0,
                 start: 3,
+            }),
+        ];
+        assert_eq!(values, expected_values);
+        let line = ".....+.58.";
+        let values = get_schematic_values(0, line);
+        let expected_values = vec![
+            SchematicValue::Symbol(Symbol {
+                row: 0,
+                start: 5,
+            }),
+            SchematicValue::PartNumber(PartNumber {
+                row: 0,
+                number: 58,
+                start: 7,
+                end: 8,
             }),
         ];
         assert_eq!(values, expected_values);
