@@ -1,4 +1,6 @@
 use clap::{Parser, Subcommand};
+use serde_json::json;
+use std::fs::File;
 use std::process::Command;
 
 #[derive(Parser)]
@@ -24,7 +26,7 @@ fn main() {
         Commands::Bootstrap { day } => {
             println!("bootstrapping day {day}!");
             let formatted_day = format!("{day:02}");
-            let output = Command::new("aoc")
+            Command::new("aoc")
                 .args([
                     "--day",
                     &day.to_string(),
@@ -37,12 +39,23 @@ fn main() {
                 ])
                 .output()
                 .expect("failed to execute process");
-            println!("{DAY_FILE}");
-            println!("{output:?}");
+            let mut hb = handlebars::Handlebars::new();
+            hb.register_template_string("day_tmpl", DAY_FILE)
+                .expect("Invalid template");
+
+            let mut output_file =
+                File::create(format!("src/day{formatted_day}.rs")).expect("Could not open file");
+            hb.render_to_write(
+                "day_tmpl",
+                &json!({"formatted_day": formatted_day}),
+                &mut output_file,
+            )
+            .expect("Could not write template");
         }
         Commands::PrintPuzzleOutput { day } => match day {
             1 => day01::run().unwrap(),
             2 => day02::run().unwrap(),
+            3 => day03::run().unwrap(),
             _ => panic!("no such day"),
         },
     }
@@ -52,7 +65,7 @@ const DAY_FILE: &str = r#"
 use std::error::Error;
 
 pub(crate) fn run() -> Result<(), Box<dyn Error>> {
-    let input_string = include_str!("../inputs/day.txt");
+    let input_string = get_input_string();
     let answer_part_1 = answer_part_1(input_string);
     let answer_part_2 = answer_part_2(input_string);
     println!("answer_part_1: {answer_part_1:?}");
@@ -61,21 +74,25 @@ pub(crate) fn run() -> Result<(), Box<dyn Error>> {
 }
 
 fn answer_part_1(lines: &str) -> usize {
-    #lines.lines().map(get_row_power).sum()
+    //lines.lines().map(get_row_power).sum()
     0
 }
 
 fn answer_part_2(lines: &str) -> usize {
-    #lines.lines().map(parse_game_row).sum()
+    //lines.lines().map(parse_game_row).sum()
     0
+}
+
+fn get_input_string() -> &'static str {
+    include_str!("../inputs/day{{formatted_day}}.txt")
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::day::{answer_part_1, answer_part_2};
+    use crate::day{{formatted_day}}::{answer_part_1, answer_part_2, get_input_string};
     #[test]
     fn test_all_lines() {
-        let lines = r%""%;
+        let lines = get_input_string();
 
         assert_eq!(answer_part_1(lines), 0);
         assert_eq!(answer_part_2(lines), 0);
@@ -85,3 +102,4 @@ mod tests {
 
 mod day01;
 mod day02;
+mod day03;
