@@ -76,9 +76,65 @@ fn answer_part_1(lines: &str) -> usize {
     running_part_total
 }
 
-fn answer_part_2(_lines: &str) -> usize {
-    //lines.lines().map(parse_game_row).sum()
-    0
+fn answer_part_2(lines: &str) -> usize {
+    let rows = lines.lines().enumerate().map(|(i, line)| get_schematic_values(i, line)).collect::<Vec<Vec<SchematicValue>>>();
+    let mut gears: HashMap<usize, Vec<Symbol>> = HashMap::new();
+    let mut parts: HashMap<usize, Vec<PartNumber>> = HashMap::new();
+    for row_items in rows {
+        for value in row_items {
+            match value {
+                SchematicValue::Symbol(ref s) => {
+                    if s.symbol == '*' {
+                        if let Some(r) = gears.get_mut(&s.row) {
+                            r.push(s.clone());
+                        } else {
+                            gears.insert(s.row, vec![s.clone()]);
+                        }
+                    }
+                },
+                SchematicValue::PartNumber(ref p) => {
+                    if let Some(r) = parts.get_mut(&p.row) {
+                        r.push(p.clone());
+                    } else {
+                        parts.insert(p.row, vec![p.clone()]);
+                    }
+                },
+            };
+        }
+    }
+    let mut running_gear_ratio = 0;
+    for (i, gear_list) in gears.iter() {
+        let relevant_parts = {
+            let mut relevant_symbols = vec![];
+            // don't include if first row
+            if i != &0 {
+                if let Some(p) = parts.get(&(i-1)) {
+                    relevant_symbols.append(&mut p.clone())
+                }
+            }
+            if let Some(p) = parts.get(i) {
+                relevant_symbols.append(&mut p.clone())
+            }
+            if let Some(p) = parts.get(&(i+1)) {
+                relevant_symbols.append(&mut p.clone())
+            }
+            relevant_symbols
+        };
+        for gear in gear_list {
+            let mut related_parts = vec![];
+            for part in &relevant_parts.clone() {
+                if part.start.saturating_sub(1) <= gear.start && gear.start <= part.end + 1 {
+                    println!("found! row: {}, part: {}, sym_row: {}, {} <= {} <= {}", part.row, part.number, gear.row, part.start, gear.start, part.end);
+                    related_parts.push(part.clone());
+                }
+            }
+            if related_parts.len() == 2 {
+                let gear_ratio: usize = related_parts.iter().map(|p| p.number).product();
+                running_gear_ratio += gear_ratio;
+            }
+        }
+    }
+    running_gear_ratio
 }
 
 fn get_input_string() -> &'static str {
@@ -102,7 +158,7 @@ fn get_schematic_values(row: usize, line: &str) -> Vec<SchematicValue> {
                 s.starts_with('=') ||
                 s.starts_with('/')
             {
-                SchematicValue::Symbol(Symbol { row, start: val.start() })
+                SchematicValue::Symbol(Symbol { row, symbol: s.chars().next().unwrap(), start: val.start() })
             } else {
                 let num: usize = match s.parse() {
                     Ok(n) => n,
@@ -132,6 +188,7 @@ struct PartNumber {
 #[derive(Debug, PartialEq, Clone)]
 struct Symbol {
         row: usize,
+        symbol: char,
         start: usize,
 }
 
@@ -144,8 +201,8 @@ mod tests {
     fn test_all_lines() {
         let lines = get_input_string();
 
-        assert_eq!(answer_part_1(lines), 0);
-        assert_eq!(answer_part_2(lines), 0);
+        assert_eq!(answer_part_1(lines), 527364);
+        assert_eq!(answer_part_2(lines), 79026871);
     }
 
     #[test]
@@ -162,11 +219,8 @@ mod tests {
 .664.598.."#;
 
         assert_eq!(answer_part_1(lines), 4361);
-        assert_eq!(answer_part_2(lines), 0);
+        assert_eq!(answer_part_2(lines), 467835);
     }
-
-    #[test]
-    fn test_line_one() {}
 
     #[test]
     fn test_get_schematic_values() {
@@ -198,6 +252,7 @@ mod tests {
             }),
             SchematicValue::Symbol(Symbol {
                 row: 0,
+                symbol: '*',
                 start: 3,
             }),
         ];
@@ -207,6 +262,7 @@ mod tests {
         let expected_values = vec![
             SchematicValue::Symbol(Symbol {
                 row: 0,
+                symbol: '+',
                 start: 5,
             }),
             SchematicValue::PartNumber(PartNumber {
