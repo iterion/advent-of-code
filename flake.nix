@@ -33,35 +33,33 @@
 
       # Helper to provide system-specific attributes
       forAllSystems = f: nixpkgs.lib.genAttrs allSystems (system: f {
-        pkgs = import nixpkgs { inherit overlays system; };
+        pkgs = import nixpkgs { 
+          inherit overlays system;
+          ci = nixpkgs.writeScriptBin "ci-local" ''
+            echo "Checking Rust formatting..."
+            cargo fmt --check
 
-        # runCiLocally = builtins.writeScriptBin "ci-local" ''
-        #   echo "Checking Rust formatting..."
-        #   cargo fmt --check
+            echo "Checking Clippy..."
+            cargo clippy
 
-        #   echo "Auditing Rust dependencies..."
-        #   cargo-deny check
+            echo "Auditing Rust dependencies..."
+            cargo-deny check
 
-        #   echo "Auditing editorconfig conformance..."
-        #   eclint -exclude "Cargo.lock"
+            echo "Testing Rust code..."
+            cargo test
 
-        #   echo "Checking spelling..."
-        #   codespell \
-        #     --skip target,.git \
-        #     --ignore-words-list crate
-
-        #   echo "Testing Rust code..."
-        #   cargo test
-
-        #   echo "Building bin..."
-        #   nix build .#advent-of-code
-        # '';
+            echo "Building bin..."
+            nix build .#advent-of-code
+          '';
+        };
       });
+
     in
     {
       # Development environment output
       devShells = forAllSystems ({ pkgs }: {
         default = pkgs.mkShell {
+          #nativeBuildInputs = [ ci ];
           packages = (with pkgs; [
             rustToolchain
             aoc-cli
@@ -79,11 +77,14 @@
             libiconv 
             darwin.apple_sdk.frameworks.Security
           ]);
+
         };
       });
 
       packages = forAllSystems({ pkgs }: rec {
         default = advent-of-code;
+
+        ci = pkgs.ci;
 
         advent-of-code = pkgs.rustPlatform.buildRustPackage {
           pname = name;
