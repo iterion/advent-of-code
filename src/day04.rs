@@ -110,7 +110,7 @@ mod tests {
         let lines = get_input_string();
 
         assert_eq!(answer_part_1(lines), 23847);
-        assert_eq!(answer_part_2(lines), 0);
+        assert_eq!(answer_part_2(lines), 8570000);
     }
 
     #[test]
