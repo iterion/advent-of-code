@@ -56,6 +56,7 @@ fn main() {
             1 => day01::run().unwrap(),
             2 => day02::run().unwrap(),
             3 => day03::run().unwrap(),
+            4 => day04::run().unwrap(),
             _ => panic!("no such day"),
         },
     }
@@ -103,3 +104,4 @@ mod tests {
 mod day01;
 mod day02;
 mod day03;
+mod day04;
