@@ -74,13 +74,11 @@ pub(crate) fn run() -> (usize, usize) {
 }
 
 fn answer_part_1(lines: &str) -> usize {
-    //lines.lines().map(get_row_power).sum()
-    0
+    lines.len()
 }
 
 fn answer_part_2(lines: &str) -> usize {
-    //lines.lines().map(parse_game_row).sum()
-    0
+    lines.len()
 }
 
 fn get_input_string() -> &'static str {
