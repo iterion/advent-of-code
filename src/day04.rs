@@ -1,4 +1,7 @@
-use std::{collections::HashSet, error::Error};
+use std::{
+    collections::{HashMap, HashSet},
+    error::Error,
+};
 
 pub(crate) fn run() -> Result<(), Box<dyn Error>> {
     let input_string = get_input_string();
@@ -17,9 +20,35 @@ fn answer_part_1(lines: &str) -> usize {
         .sum()
 }
 
-fn answer_part_2(_lines: &str) -> usize {
-    //lines.lines().map(parse_game_row).sum()
-    0
+fn answer_part_2(lines: &str) -> usize {
+    let scratch_cards: Vec<_> = lines.lines().map(ScratchCard::parse).collect();
+    let mut card_counts = HashMap::new();
+    for card in &scratch_cards {
+        //println!("{card:?}");
+        let cur_card = card.number;
+        // increment this card since we're counting it
+        *(card_counts.entry(cur_card).or_insert(0)) += 1;
+        let next_cards = card.your_winning_numbers().len();
+        let cur_card_count = *card_counts
+            .get(&cur_card)
+            .expect("this would have been initialized already");
+
+        if next_cards == 0 {
+            continue;
+        }
+        //println!("adding cards: {}..{}", cur_card+1, cur_card+next_cards);
+        // increment any cards owned by this one
+        for i in (cur_card + 1)..=(cur_card + next_cards) {
+            *(card_counts.entry(i).or_insert(0)) += cur_card_count;
+        }
+    }
+    //println!("{card_counts:?}");
+
+    let mut total = 0;
+    for (_, count) in card_counts {
+        total += count;
+    }
+    total
 }
 
 fn get_input_string() -> &'static str {
@@ -94,7 +123,7 @@ Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36
 Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11"#;
 
         assert_eq!(answer_part_1(lines), 13);
-        assert_eq!(answer_part_2(lines), 0);
+        assert_eq!(answer_part_2(lines), 30);
     }
 
     #[test]
