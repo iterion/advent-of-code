@@ -14,7 +14,7 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     Bootstrap { day: usize },
-    PrintPuzzleOutput { day: usize },
+    PrintSolution { day: usize },
 }
 
 fn main() {
@@ -52,7 +52,7 @@ fn main() {
             )
             .expect("Could not write template");
         }
-        Commands::PrintPuzzleOutput { day } => {
+        Commands::PrintSolution { day } => {
             let (part_1, part_2) = match day {
                 1 => day01::run(),
                 2 => day02::run(),
