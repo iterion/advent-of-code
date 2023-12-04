@@ -1,15 +1,14 @@
-use std::error::Error;
 const MAX_RED: usize = 12;
 const MAX_GREEN: usize = 13;
 const MAX_BLUE: usize = 14;
 
-pub(crate) fn run() -> Result<(), Box<dyn Error>> {
-    let input_string = include_str!("../inputs/day02.txt");
-    let answer_part_1 = sum_all_possible_games(input_string);
-    let answer_part_2 = sum_all_possible_line_powers(input_string);
-    println!("answer_part_1: {answer_part_1:?}");
-    println!("answer_part_2: {answer_part_2:?}");
-    Ok(())
+pub(crate) fn run() -> (usize, usize) {
+    let input_string = get_input_string();
+    (answer_part_1(input_string), answer_part_2(input_string))
+}
+
+fn get_input_string() -> &'static str {
+    include_str!("../inputs/day02.txt")
 }
 
 fn get_row_power(lines: &str) -> usize {
@@ -40,11 +39,11 @@ fn get_min_for_colors(line: &str) -> (usize, usize, usize) {
     colors
 }
 
-fn sum_all_possible_line_powers(lines: &str) -> usize {
+fn answer_part_2(lines: &str) -> usize {
     lines.lines().map(get_row_power).sum()
 }
 
-fn sum_all_possible_games(lines: &str) -> usize {
+fn answer_part_1(lines: &str) -> usize {
     lines.lines().map(parse_game_row).sum()
 }
 
@@ -92,8 +91,8 @@ fn is_valid_color(draw: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use crate::day02::{
-        are_games_possible, get_min_for_colors, get_row_power, is_game_possible, parse_game_row,
-        sum_all_possible_games, sum_all_possible_line_powers,
+        answer_part_1, answer_part_2, are_games_possible, get_min_for_colors, get_row_power,
+        is_game_possible, parse_game_row,
     };
     #[test]
     fn test_all_lines() {
@@ -103,8 +102,8 @@ Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
 Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
 Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green"#;
 
-        assert_eq!(sum_all_possible_games(lines), 8);
-        assert_eq!(sum_all_possible_line_powers(lines), 2286);
+        assert_eq!(answer_part_1(lines), 8);
+        assert_eq!(answer_part_2(lines), 2286);
     }
 
     #[test]

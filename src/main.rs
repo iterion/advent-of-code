@@ -52,26 +52,25 @@ fn main() {
             )
             .expect("Could not write template");
         }
-        Commands::PrintPuzzleOutput { day } => match day {
-            1 => day01::run().unwrap(),
-            2 => day02::run().unwrap(),
-            3 => day03::run().unwrap(),
-            4 => day04::run().unwrap(),
-            _ => panic!("no such day"),
-        },
+        Commands::PrintPuzzleOutput { day } => {
+            let (part_1, part_2) = match day {
+                1 => day01::run(),
+                2 => day02::run(),
+                3 => day03::run(),
+                4 => day04::run(),
+                _ => panic!("no such day"),
+            };
+
+            println!("answer_part_1: {part_1:?}");
+            println!("answer_part_2: {part_2:?}");
+        }
     }
 }
 
 const DAY_FILE: &str = r#"
-use std::error::Error;
-
-pub(crate) fn run() -> Result<(), Box<dyn Error>> {
+pub(crate) fn run() -> (usize, usize) {
     let input_string = get_input_string();
-    let answer_part_1 = answer_part_1(input_string);
-    let answer_part_2 = answer_part_2(input_string);
-    println!("answer_part_1: {answer_part_1:?}");
-    println!("answer_part_2: {answer_part_2:?}");
-    Ok(())
+    (answer_part_1(input_string), answer_part_2(input_string))
 }
 
 fn answer_part_1(lines: &str) -> usize {

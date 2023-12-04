@@ -1,19 +1,14 @@
 use lazy_static::lazy_static;
 use regex::Regex;
 use std::collections::HashMap;
-use std::error::Error;
 
 lazy_static! {
     static ref SCHEMATIC_RE: Regex = Regex::new(r"(\d+)|([\*$&\#\-=\+%/@])").unwrap();
 }
 
-pub(crate) fn run() -> Result<(), Box<dyn Error>> {
+pub(crate) fn run() -> (usize, usize) {
     let input_string = get_input_string();
-    let answer_part_1 = answer_part_1(input_string);
-    let answer_part_2 = answer_part_2(input_string);
-    println!("answer_part_1: {answer_part_1:?}");
-    println!("answer_part_2: {answer_part_2:?}");
-    Ok(())
+    (answer_part_1(input_string), answer_part_2(input_string))
 }
 
 fn answer_part_1(lines: &str) -> usize {

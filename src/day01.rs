@@ -1,15 +1,22 @@
 use lazy_static::lazy_static;
 use regex::Regex;
-use std::error::Error;
 
 lazy_static! {
     static ref RE: Regex = Regex::new("one|two|three|four|five|six|seven|eight|nine")
         .expect("failed to compile regex");
 }
 
-pub(crate) fn run() -> Result<(), Box<dyn Error>> {
-    let input_string = include_str!("../inputs/day01.txt");
-    let answer_part_1: usize = input_string
+pub(crate) fn run() -> (usize, usize) {
+    let input_string = get_input_string();
+    (answer_part_1(input_string), answer_part_2(input_string))
+}
+
+fn get_input_string() -> &'static str {
+    include_str!("../inputs/day01.txt")
+}
+
+fn answer_part_1(lines: &str) -> usize {
+    lines
         .split('\n')
         .filter(|s| !s.is_empty())
         .map(|s| {
@@ -28,14 +35,10 @@ pub(crate) fn run() -> Result<(), Box<dyn Error>> {
             };
             num
         })
-        .sum();
-    let answer_part_2 = parse_all_lines_v2(input_string);
-    println!("answer_part_1: {answer_part_1:?}");
-    println!("answer_part_2: {answer_part_2:?}");
-    Ok(())
+        .sum()
 }
 
-fn parse_all_lines_v2(lines: &str) -> usize {
+fn answer_part_2(lines: &str) -> usize {
     lines
         .split('\n')
         .filter(|s| !s.is_empty())
@@ -118,7 +121,7 @@ fn parse_word_digits_safely(cal_val: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use crate::day01::parse_all_lines_v2;
+    use crate::day01::answer_part_2;
     #[test]
     fn test_parse_calibration_line() {
         let lines = r#"
@@ -131,14 +134,14 @@ zoneight234
 7pqrstsixteen
 "#;
 
-        assert_eq!(parse_all_lines_v2(lines), 281);
+        assert_eq!(answer_part_2(lines), 281);
         let lines = r#"
 1abc2
 pqr3stu8vwx
 a1b2c3d4e5f
 treb7uchet
 "#;
-        assert_eq!(parse_all_lines_v2(lines), 142);
-        assert_eq!(parse_all_lines_v2("eighthree"), 83);
+        assert_eq!(answer_part_2(lines), 142);
+        assert_eq!(answer_part_2("eighthree"), 83);
     }
 }
