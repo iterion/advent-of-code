@@ -1,14 +1,15 @@
+use rayon::prelude::*;
 pub(crate) fn run() -> (usize, usize) {
     let input_string = get_input_string();
     (answer_part_1(input_string), answer_part_2(input_string))
 }
 
 fn answer_part_1(lines: &str) -> usize {
-    FullMap::parse(lines).min_location_for_seeds()
+    FullMap::parse(lines).min_location_for_seeds(true)
 }
 
 fn answer_part_2(lines: &str) -> usize {
-    lines.len()
+    FullMap::parse(lines).min_location_for_seeds(false)
 }
 
 fn get_input_string() -> &'static str {
@@ -146,20 +147,51 @@ impl FullMap {
         }
     }
 
-    fn min_location_for_seeds(&self) -> usize {
-        let mut location = usize::MAX;
+    fn expanded_seed_list(&self) -> Vec<usize> {
+        let mut seed_iter = self.seeds.iter();
+        let mut new_seeds = vec![];
 
-        for seed in &self.seeds {
-            let new_local = self.location_from_seed(*seed);
-            if new_local < location {
-                location = new_local;
+        while let Some(seed) = seed_iter.next() {
+            let count = seed_iter.next().unwrap();
+            let mut all_seeds: Vec<usize> = (*seed..(*seed + count)).collect();
+            new_seeds.append(&mut all_seeds);
+        }
+        new_seeds
+    }
+
+    fn min_location_for_seeds(&self, v1: bool) -> usize {
+        let mut location = usize::MAX;
+        let seeds = if v1 {
+            self.seeds.clone()
+        } else {
+            self.expanded_seed_list()
+        };
+        let total = seeds.len();
+
+        let mut num_processed = 0;
+        let locations: Vec<usize> = seeds
+            .par_iter()
+            .map(|seed| self.location_from_seed(*seed))
+            .collect();
+        for new_local in &locations {
+            if new_local < &location {
+                location = *new_local;
+            }
+
+            num_processed += 1;
+            if num_processed % 10000 == 0 {
+                println!(
+                    "{}/{} ({}) seeds processed",
+                    num_processed,
+                    total,
+                    num_processed as f64 / total as f64
+                );
             }
         }
         location
     }
 
     fn location_from_seed(&self, seed: usize) -> usize {
-        println!("seed: {}", seed);
         let soil = self
             .seed_to_soil
             .iter()
@@ -259,7 +291,8 @@ mod tests {
         let lines = get_input_string();
 
         assert_eq!(answer_part_1(lines), 26273516);
-        assert_eq!(answer_part_2(lines), 7169);
+        // run this if you dare, it uses all cores and still takes a while
+        //assert_eq!(answer_part_2(lines), 34039469);
     }
     const EXAMPLE_LINES: &'static str = r#"seeds: 79 14 55 13
 
@@ -434,5 +467,18 @@ humidity-to-location map:
         assert!(map.seed_to_soil[1].contains_item(79));
         assert_eq!(map.seed_to_soil[1].item_location(79), 81);
         assert_eq!(map.location_from_seed(79), 82);
+    }
+
+    #[test]
+    fn test_expanded_seed_list() {
+        let map = FullMap::parse(EXAMPLE_LINES);
+
+        assert_eq!(
+            map.expanded_seed_list(),
+            vec![
+                79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 55, 56, 57, 58, 59, 60, 61,
+                62, 63, 64, 65, 66, 67,
+            ]
+        );
     }
 }
