@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand};
 use serde_json::json;
 use std::fs::File;
+use std::path::Path;
 use std::process::Command;
 
 #[derive(Parser)]
@@ -43,14 +44,17 @@ fn main() {
             hb.register_template_string("day_tmpl", DAY_FILE)
                 .expect("Invalid template");
 
-            let mut output_file =
-                File::create(format!("src/day{formatted_day}.rs")).expect("Could not open file");
-            hb.render_to_write(
-                "day_tmpl",
-                &json!({"formatted_day": formatted_day}),
-                &mut output_file,
-            )
-            .expect("Could not write template");
+            let day_rs_name = format!("src/day{formatted_day}.rs");
+            let rs_path = Path::new(&day_rs_name);
+            if !rs_path.exists() {
+                let mut output_file = File::create(rs_path).expect("Could not open file");
+                hb.render_to_write(
+                    "day_tmpl",
+                    &json!({"formatted_day": formatted_day}),
+                    &mut output_file,
+                )
+                .expect("Could not write template");
+            }
         }
         Commands::PrintSolution { day } => {
             let (part_1, part_2) = match day {
