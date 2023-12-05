@@ -16,6 +16,7 @@ struct Cli {
 enum Commands {
     Bootstrap { day: usize },
     PrintSolution { day: usize },
+    Submit { day: usize, part: usize },
 }
 
 fn main() {
@@ -62,11 +63,36 @@ fn main() {
                 2 => day02::run(),
                 3 => day03::run(),
                 4 => day04::run(),
+                5 => day05::run(),
                 _ => panic!("no such day"),
             };
 
             println!("answer_part_1: {part_1:?}");
             println!("answer_part_2: {part_2:?}");
+        }
+        Commands::Submit { day, part } => {
+            let (part_1, part_2) = match day {
+                1 => day01::run(),
+                2 => day02::run(),
+                3 => day03::run(),
+                4 => day04::run(),
+                5 => day05::run(),
+                _ => panic!("no such day"),
+            };
+
+            let answer = if part == &1 { part_1 } else { part_2 };
+            println!("submitting answer for part {part}: {answer}");
+
+            Command::new("aoc")
+                .args([
+                    "--day",
+                    &day.to_string(),
+                    "submit",
+                    &part.to_string(),
+                    &answer.to_string(),
+                ])
+                .output()
+                .expect("failed to submit results");
         }
     }
 }
@@ -106,3 +132,4 @@ mod day01;
 mod day02;
 mod day03;
 mod day04;
+mod day05;
