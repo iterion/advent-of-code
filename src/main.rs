@@ -1,8 +1,14 @@
 use clap::{Parser, Subcommand};
 use serde_json::json;
-use std::fs::File;
-use std::path::Path;
-use std::process::Command;
+use std::{error::Error, fs::File, io::Read, path::Path, process::Command};
+
+use async_openai::{
+    types::{
+        ChatCompletionRequestAssistantMessageArgs, ChatCompletionRequestSystemMessageArgs,
+        ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs,
+    },
+    Client,
+};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -17,6 +23,7 @@ enum Commands {
     Bootstrap { day: usize },
     PrintSolution { day: usize },
     Submit { day: usize, part: usize },
+    TestCompletion { day: usize },
 }
 
 fn main() {
@@ -94,6 +101,19 @@ fn main() {
                 .output()
                 .expect("failed to submit results");
         }
+        Commands::TestCompletion { day } => {
+            // Create the runtime
+            tokio::runtime::Builder::new_current_thread()
+                .enable_io()
+                .enable_time()
+                .build()
+                .unwrap()
+                .block_on(async {
+                    let test_case = generate_sample_test_case(*day).await;
+                    println!("got test case:");
+                    println!("{test_case}");
+                })
+        }
     }
 }
 
@@ -127,6 +147,73 @@ mod tests {
     }
 }
 "#;
+
+const DAY_3_TEST_EXAMPLE: &str = r###"
+    const SAMPLE_INPUT: &'static str = r#"467..114..
+...*......
+..35..633.
+......#...
+617*......
+.....+.58.
+..592.....
+......755.
+...$.*....
+.664.598.."#;
+
+    #[test]
+    fn test_short_example() {
+        assert_eq!(answer_part_1(SAMPLE_INPUT), 4361);
+        assert_eq!(answer_part_2(SAMPLE_INPUT), 467835);
+    }
+"###;
+
+async fn generate_sample_test_case(day: usize) -> String {
+    let client = Client::new();
+    let puzzle_input_str = format!("puzzles/day{day:02}.md");
+    let puzzle_input_path = Path::new(&puzzle_input_str);
+    let day_3_puzzle = include_str!("../puzzles/day03.md");
+    let mut current_puzzle = String::new();
+    File::open(puzzle_input_path)
+        .expect(&format!("{puzzle_input_str} not found"))
+        .read_to_string(&mut current_puzzle)
+        .expect("couldn't read file to string");
+
+    let request = CreateChatCompletionRequestArgs::default()
+        .max_tokens(1024u16)
+        .model("gpt-4-1106-preview")
+        .messages([
+            ChatCompletionRequestSystemMessageArgs::default()
+                .content("You are a puzzle sample test creation assistant. You take puzzle inputs and return a valid test case in Rust. Return only sample rust test cases and rust constants")
+                .build().unwrap()
+                .into(),
+            ChatCompletionRequestUserMessageArgs::default()
+                .content(day_3_puzzle)
+                .build().unwrap()
+                .into(),
+            ChatCompletionRequestAssistantMessageArgs::default()
+                .content(DAY_3_TEST_EXAMPLE)
+                .build().unwrap()
+                .into(),
+            ChatCompletionRequestUserMessageArgs::default()
+                .content(current_puzzle)
+                .build().unwrap()
+                .into(),
+        ])
+        .build().unwrap();
+
+    client
+        .chat()
+        .create(request)
+        .await
+        .expect("should have gotten a successful response")
+        .choices
+        .first()
+        .expect("didn't return any chat responses")
+        .message
+        .content
+        .clone()
+        .expect("content was unexpectedly empty")
+}
 
 mod day01;
 mod day02;
