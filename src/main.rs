@@ -59,10 +59,11 @@ fn main() {
                 .build()
                 .unwrap()
                 .block_on(async {
-                    let test_case = generate_sample_test_case(*day).await;
                     let day_rs_name = format!("src/day{formatted_day}.rs");
                     let rs_path = Path::new(&day_rs_name);
                     if !rs_path.exists() {
+                        println!("generating day {day} tests!");
+                        let test_case = generate_sample_test_case(*day).await;
                         let mut output_file = File::create(rs_path).expect("Could not open file");
                         hb.render_to_write(
                             "day_tmpl",
@@ -71,11 +72,11 @@ fn main() {
                         )
                         .expect("Could not write template");
                     }
-                    Command::new("cargo")
-                        .args(["fmt"])
-                        .status()
-                        .expect("expected fmt to work");
-                })
+                });
+            Command::new("cargo")
+                .args(["fmt"])
+                .status()
+                .expect("expected fmt to work");
         }
         Commands::PrintSolution { day } => {
             let (part_1, part_2) = match day {
@@ -84,6 +85,7 @@ fn main() {
                 3 => day03::run(),
                 4 => day04::run(),
                 5 => day05::run(),
+                6 => day06::run(),
                 _ => panic!("no such day"),
             };
 
@@ -97,6 +99,7 @@ fn main() {
                 3 => day03::run(),
                 4 => day04::run(),
                 5 => day05::run(),
+                6 => day06::run(),
                 _ => panic!("no such day"),
             };
 
@@ -235,3 +238,4 @@ mod day02;
 mod day03;
 mod day04;
 mod day05;
+mod day06;
