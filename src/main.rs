@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand};
 use serde_json::json;
-use std::{error::Error, fs::File, io::Read, path::Path, process::Command};
+use std::{fs::File, io::Read, path::Path, process::Command};
 
 use async_openai::{
     types::{
@@ -52,17 +52,30 @@ fn main() {
             hb.register_template_string("day_tmpl", DAY_FILE)
                 .expect("Invalid template");
 
-            let day_rs_name = format!("src/day{formatted_day}.rs");
-            let rs_path = Path::new(&day_rs_name);
-            if !rs_path.exists() {
-                let mut output_file = File::create(rs_path).expect("Could not open file");
-                hb.render_to_write(
-                    "day_tmpl",
-                    &json!({"formatted_day": formatted_day}),
-                    &mut output_file,
-                )
-                .expect("Could not write template");
-            }
+            // using async for just this bit
+            tokio::runtime::Builder::new_current_thread()
+                .enable_io()
+                .enable_time()
+                .build()
+                .unwrap()
+                .block_on(async {
+                    let test_case = generate_sample_test_case(*day).await;
+                    let day_rs_name = format!("src/day{formatted_day}.rs");
+                    let rs_path = Path::new(&day_rs_name);
+                    if !rs_path.exists() {
+                        let mut output_file = File::create(rs_path).expect("Could not open file");
+                        hb.render_to_write(
+                            "day_tmpl",
+                            &json!({"formatted_day": formatted_day, "test_case": test_case}),
+                            &mut output_file,
+                        )
+                        .expect("Could not write template");
+                    }
+                    Command::new("cargo")
+                        .args(["fmt"])
+                        .status()
+                        .expect("expected fmt to work");
+                })
         }
         Commands::PrintSolution { day } => {
             let (part_1, part_2) = match day {
@@ -102,7 +115,7 @@ fn main() {
                 .expect("failed to submit results");
         }
         Commands::TestCompletion { day } => {
-            // Create the runtime
+            // using async for just this bit
             tokio::runtime::Builder::new_current_thread()
                 .enable_io()
                 .enable_time()
@@ -145,10 +158,12 @@ mod tests {
         assert_eq!(answer_part_1(lines), 0);
         assert_eq!(answer_part_2(lines), 0);
     }
+
+    {{test_case}}
 }
 "#;
 
-const DAY_3_TEST_EXAMPLE: &str = r###"
+const DAY_3_TEST_EXAMPLE: &str = r##"
     const SAMPLE_INPUT: &'static str = r#"467..114..
 ...*......
 ..35..633.
@@ -165,7 +180,7 @@ const DAY_3_TEST_EXAMPLE: &str = r###"
         assert_eq!(answer_part_1(SAMPLE_INPUT), 4361);
         assert_eq!(answer_part_2(SAMPLE_INPUT), 467835);
     }
-"###;
+"##;
 
 async fn generate_sample_test_case(day: usize) -> String {
     let client = Client::new();
@@ -174,7 +189,7 @@ async fn generate_sample_test_case(day: usize) -> String {
     let day_3_puzzle = include_str!("../puzzles/day03.md");
     let mut current_puzzle = String::new();
     File::open(puzzle_input_path)
-        .expect(&format!("{puzzle_input_str} not found"))
+        .unwrap_or_else(|_| panic!("{puzzle_input_str} not found"))
         .read_to_string(&mut current_puzzle)
         .expect("couldn't read file to string");
 

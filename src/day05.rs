@@ -294,7 +294,7 @@ mod tests {
         // run this if you dare, it uses all cores and still takes a while
         //assert_eq!(answer_part_2(lines), 34039469);
     }
-    const EXAMPLE_LINES: &'static str = r#"seeds: 79 14 55 13
+    const EXAMPLE_LINES: &str = r#"seeds: 79 14 55 13
 
 seed-to-soil map:
 50 98 2
@@ -333,7 +333,7 @@ humidity-to-location map:
     #[test]
     fn test_short_example() {
         assert_eq!(answer_part_1(EXAMPLE_LINES), 35);
-        assert_eq!(answer_part_2(EXAMPLE_LINES), 341);
+        assert_eq!(answer_part_2(EXAMPLE_LINES), 46);
     }
 
     #[test]

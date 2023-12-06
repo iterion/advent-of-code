@@ -132,7 +132,7 @@
         pkgs = nixpkgs.legacyPackages.${system};
 
         # Filter inputs to only those necessary for the build
-        inputTexts = path: _type: builtins.match ".*txt$" path != null;
+        inputTexts = path: _type: builtins.match ".*[txt|md]$" path != null;
         inputTextsOrCargo = path: type:
           (inputTexts path type) || (craneLib.filterCargoSources path type);
 
@@ -195,10 +195,15 @@
         advent-of-code-coverage = craneLib.cargoTarpaulin (commonArgs // {
           inherit cargoArtifacts;
         });
+
+        # Audit licenses
+        advent-of-code-deny = craneLib.cargoDeny (commonArgs // {
+          inherit cargoArtifacts;
+        });
       in
       {
         checks = {
-          inherit advent-of-code advent-of-code-clippy advent-of-code-coverage;
+          inherit advent-of-code advent-of-code-clippy advent-of-code-coverage advent-of-code-deny;
         };
 
         packages.default = advent-of-code;
