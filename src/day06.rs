@@ -8,7 +8,7 @@ fn answer_part_1(lines: &str) -> usize {
 }
 
 fn answer_part_2(lines: &str) -> usize {
-    lines.len()
+    Races::parse_v2(lines).ways_to_win_product()
 }
 
 struct Races {
@@ -38,6 +38,29 @@ impl Races {
             .collect();
         Races {
             times_and_distances: times.iter().copied().zip(distances).collect(),
+        }
+    }
+
+    fn parse_v2(lines: &str) -> Self {
+        let mut line_iter = lines.lines();
+        let time: usize = line_iter
+            .next()
+            .expect("should have first line")
+            .split_once(':')
+            .expect("should have times")
+            .1
+            .replace(' ', "")
+            .parse().expect("expected parseable number");
+        let distance: usize = line_iter
+            .next()
+            .expect("should have first line")
+            .split_once(':')
+            .expect("should have distances")
+            .1
+            .replace(' ', "")
+            .parse().expect("expected parseable number");
+        Races {
+            times_and_distances: vec![(time, distance)],
         }
     }
 
@@ -71,7 +94,7 @@ mod tests {
         let lines = get_input_string();
 
         assert_eq!(answer_part_1(lines), 131376);
-        assert_eq!(answer_part_2(lines), 74);
+        assert_eq!(answer_part_2(lines), 34123437);
     }
 
     const RAW_RACE_TIME_AND_DISTANCES: &str = r#"Time:      7  15   30
@@ -91,5 +114,12 @@ Distance:  9  40  200"#;
         assert_eq!(ways_to_win, vec![4, 8, 9]);
 
         assert_eq!(races.ways_to_win_product(), 288);
+    }
+
+    #[test]
+    fn test_ways_to_win_v2() {
+        let races = Races::parse_v2(RAW_RACE_TIME_AND_DISTANCES);
+
+        assert_eq!(races.ways_to_win_product(), 71503);
     }
 }

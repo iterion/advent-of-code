@@ -106,7 +106,7 @@ fn main() {
             let answer = if part == &1 { part_1 } else { part_2 };
             println!("submitting answer for part {part}: {answer}");
 
-            Command::new("aoc")
+            let submission_result = Command::new("aoc")
                 .args([
                     "--day",
                     &day.to_string(),
@@ -116,6 +116,7 @@ fn main() {
                 ])
                 .output()
                 .expect("failed to submit results");
+            println!("{submission_result:?}");
         }
         Commands::TestCompletion { day } => {
             // using async for just this bit
