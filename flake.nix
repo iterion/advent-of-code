@@ -208,6 +208,8 @@
 
         packages.default = advent-of-code;
 
+        packages.advent-of-code = advent-of-code;
+
         apps.default = flake-utils.lib.mkApp {
           drv = advent-of-code;
         };
