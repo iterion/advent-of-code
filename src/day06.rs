@@ -50,7 +50,8 @@ impl Races {
             .expect("should have times")
             .1
             .replace(' ', "")
-            .parse().expect("expected parseable number");
+            .parse()
+            .expect("expected parseable number");
         let distance: usize = line_iter
             .next()
             .expect("should have first line")
@@ -58,7 +59,8 @@ impl Races {
             .expect("should have distances")
             .1
             .replace(' ', "")
-            .parse().expect("expected parseable number");
+            .parse()
+            .expect("expected parseable number");
         Races {
             times_and_distances: vec![(time, distance)],
         }

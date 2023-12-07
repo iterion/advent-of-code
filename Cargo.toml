@@ -10,6 +10,8 @@ license = "MIT"
 async-openai = "0.17.1"
 clap = { version = "4.4.10", features = ["derive"] }
 handlebars = "4.5.0"
+html-escape = "0.2.13"
+itertools = "0.12.0"
 lazy_static = "1.4.0"
 rayon = "1.8.0"
 regex = "1.10.2"

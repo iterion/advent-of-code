@@ -63,7 +63,8 @@ fn main() {
                     let rs_path = Path::new(&day_rs_name);
                     if !rs_path.exists() {
                         println!("generating day {day} tests!");
-                        let test_case = generate_sample_test_case(*day).await;
+                        let test_case_unescaped = generate_sample_test_case(*day).await;
+                        let test_case = html_escape::decode_html_entities(&test_case_unescaped);
                         let mut output_file = File::create(rs_path).expect("Could not open file");
                         hb.render_to_write(
                             "day_tmpl",
@@ -86,6 +87,7 @@ fn main() {
                 4 => day04::run(),
                 5 => day05::run(),
                 6 => day06::run(),
+                7 => day07::run(),
                 _ => panic!("no such day"),
             };
 
@@ -100,6 +102,7 @@ fn main() {
                 4 => day04::run(),
                 5 => day05::run(),
                 6 => day06::run(),
+                7 => day07::run(),
                 _ => panic!("no such day"),
             };
 
@@ -202,7 +205,7 @@ async fn generate_sample_test_case(day: usize) -> String {
         .model("gpt-4-1106-preview")
         .messages([
             ChatCompletionRequestSystemMessageArgs::default()
-                .content("You are a puzzle sample test creation assistant. You take puzzle inputs and return a valid test case in Rust. Return only sample rust test cases and rust constants")
+                .content("You are a puzzle sample test creation assistant. You take puzzle inputs and return a valid test case in Rust. Do not use html encoded characters in your response. Do not wrap the response in a code block! Write the code as it would be inserted in a Rust source file. Return only sample rust test cases and rust constants, do not try to implement the puzzle solution!")
                 .build().unwrap()
                 .into(),
             ChatCompletionRequestUserMessageArgs::default()
@@ -240,3 +243,4 @@ mod day03;
 mod day04;
 mod day05;
 mod day06;
+mod day07;
