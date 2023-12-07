@@ -1,5 +1,8 @@
 use itertools::Itertools;
-use std::{cmp::Ordering, fmt::Display};
+use std::{
+    cmp::Ordering,
+    fmt::{Debug, Display},
+};
 
 pub(crate) fn run() -> (usize, usize) {
     let input_string = get_input_string();
@@ -7,17 +10,23 @@ pub(crate) fn run() -> (usize, usize) {
 }
 
 fn answer_part_1(lines: &str) -> usize {
-    let hands: Vec<_> = lines.lines().map(HandBid::parse).collect();
+    let hands: Vec<_> = lines.lines().map(HandBid::<Hand>::parse).collect();
     calculate_total_winnings(hands)
 }
 
 fn answer_part_2(lines: &str) -> usize {
-    lines.len()
+    let hands: Vec<_> = lines.lines().map(HandBid::<HandV2>::parse).collect();
+    calculate_total_winnings(hands)
 }
 
-fn calculate_total_winnings(hands: Vec<HandBid>) -> usize {
+fn calculate_total_winnings<T: Ord + Debug + BaseRanking + Clone + From<Vec<Card>>>(
+    hands: Vec<HandBid<T>>,
+) -> usize {
     let mut sorted_hands = hands.clone();
     sorted_hands.sort();
+    for hand in &sorted_hands {
+        println!("{hand}");
+    }
     sorted_hands
         .iter()
         .enumerate()
@@ -27,46 +36,6 @@ fn calculate_total_winnings(hands: Vec<HandBid>) -> usize {
 
 fn get_input_string() -> &'static str {
     include_str!("../inputs/day07.txt")
-}
-
-impl Ord for Hand {
-    fn cmp(&self, other: &Self) -> Ordering {
-        let self_rank = self.get_base_ranking();
-        let other_rank = other.get_base_ranking();
-        if self_rank < other_rank {
-            Ordering::Less
-        } else if self_rank > other_rank {
-            Ordering::Greater
-        } else if let Some((a, b)) = self
-            .cards
-            .clone()
-            .iter()
-            .zip(other.cards.clone())
-            .find(|(a, b)| a != &b)
-        {
-            a.cmp(&b)
-        } else {
-            Ordering::Equal
-        }
-    }
-}
-
-impl PartialOrd for Hand {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for HandBid {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.hand.cmp(&other.hand)
-    }
-}
-
-impl PartialOrd for HandBid {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -112,7 +81,35 @@ struct Hand {
     cards: Vec<Card>,
 }
 
-impl Hand {
+impl Ord for Hand {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let self_rank = self.get_base_ranking();
+        let other_rank = other.get_base_ranking();
+        if self_rank < other_rank {
+            Ordering::Less
+        } else if self_rank > other_rank {
+            Ordering::Greater
+        } else if let Some((a, b)) = self
+            .cards
+            .clone()
+            .iter()
+            .zip(other.cards.clone())
+            .find(|(a, b)| a != &b)
+        {
+            a.cmp(&b)
+        } else {
+            Ordering::Equal
+        }
+    }
+}
+
+impl PartialOrd for Hand {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl BaseRanking for Hand {
     fn get_base_ranking(&self) -> usize {
         let card_counts = self.cards.iter().counts();
         if card_counts.len() == 5 {
@@ -142,13 +139,111 @@ impl Hand {
     }
 }
 
+impl From<Vec<Card>> for Hand {
+    fn from(cards: Vec<Card>) -> Self {
+        Self { cards }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct HandBid {
-    hand: Hand,
+struct HandV2 {
+    cards: Vec<Card>,
+}
+
+impl Ord for HandV2 {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let self_rank = self.get_base_ranking();
+        let other_rank = other.get_base_ranking();
+        if self_rank < other_rank {
+            Ordering::Less
+        } else if self_rank > other_rank {
+            Ordering::Greater
+        } else if let Some((a, b)) = self
+            .cards
+            .clone()
+            .iter()
+            .zip(other.cards.clone())
+            .find(|(a, b)| a != &b)
+        {
+            // special case jack as joker
+            if a == &Card::Jack {
+                Ordering::Less
+            } else if b == Card::Jack {
+                Ordering::Greater
+            } else {
+                a.cmp(&b)
+            }
+        } else {
+            Ordering::Equal
+        }
+    }
+}
+
+impl PartialOrd for HandV2 {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl BaseRanking for HandV2 {
+    fn get_base_ranking(&self) -> usize {
+        let card_counts = self.cards.iter().filter(|c| *c != &Card::Jack).counts();
+        let jack_counts = self
+            .cards
+            .iter()
+            .filter(|c| *c == &Card::Jack)
+            .collect::<Vec<_>>()
+            .len();
+        let base_rank = card_counts.len();
+        if base_rank == 5 {
+            0
+        } else if base_rank == 4 {
+            // must be one pair
+            1
+        } else if base_rank == 3 {
+            // could be two pair or three of a kind
+            if jack_counts > 0 || card_counts.iter().any(|(_c, count)| *count == 3) {
+                3
+            } else {
+                2
+            }
+        } else if base_rank == 2 {
+            // could be full house pair or four of a kind
+            if jack_counts > 0 {
+                if jack_counts >= 2 || card_counts.iter().any(|(_c, count)| *count == 3) {
+                    5
+                } else {
+                    4
+                }
+            } else if card_counts.iter().any(|(_c, count)| *count == 4) {
+                5
+            } else {
+                4
+            }
+        } else {
+            // must be five of a kind
+            6
+        }
+    }
+}
+
+impl From<Vec<Card>> for HandV2 {
+    fn from(cards: Vec<Card>) -> Self {
+        Self { cards }
+    }
+}
+
+trait BaseRanking {
+    fn get_base_ranking(&self) -> usize;
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct HandBid<T: Ord + Debug + BaseRanking + Clone + From<Vec<Card>>> {
+    hand: T,
     bid: usize,
 }
 
-impl Display for HandBid {
+impl<T: Ord + Debug + BaseRanking + Clone + From<Vec<Card>>> Display for HandBid<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(
             f,
@@ -160,12 +255,24 @@ impl Display for HandBid {
     }
 }
 
-impl HandBid {
-    fn parse(line: &str) -> Self {
+impl<T: Ord + Debug + BaseRanking + Clone + From<Vec<Card>>> Ord for HandBid<T> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.hand.cmp(&other.hand)
+    }
+}
+
+impl<T: Ord + Debug + BaseRanking + Clone + From<Vec<Card>>> PartialOrd for HandBid<T> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl<T: Ord + Debug + BaseRanking + Clone + From<Vec<Card>>> HandBid<T> {
+    fn parse(line: &str) -> HandBid<T> {
         let (cards, bid_str) = line.split_once(' ').unwrap();
         let cards: Vec<_> = cards.chars().map(Card::parse).collect();
         Self {
-            hand: Hand { cards },
+            hand: cards.into(),
             bid: bid_str.parse().unwrap(),
         }
     }
@@ -182,7 +289,7 @@ mod tests {
         let lines = get_input_string();
 
         assert_eq!(answer_part_1(lines), 249726565);
-        assert_eq!(answer_part_2(lines), 9893);
+        assert_eq!(answer_part_2(lines), 251135960);
     }
 
     const SAMPLE_HANDS_STR: &str = r#"32T3K 765
@@ -196,7 +303,7 @@ QQQJA 483
     fn test_parse_hands() {
         let hands: Vec<_> = SAMPLE_HANDS_STR
             .lines()
-            .map(HandBid::parse)
+            .map(HandBid::<Hand>::parse)
             .collect();
         assert_eq!(
             hands,
@@ -251,9 +358,10 @@ QQQJA 483
     fn test_camel_cards_example() {
         let hands: Vec<_> = SAMPLE_HANDS_STR
             .lines()
-            .map(HandBid::parse)
+            .map(HandBid::<Hand>::parse)
             .collect();
         let total_winnings = calculate_total_winnings(hands);
         assert_eq!(total_winnings, 6440);
+        assert_eq!(answer_part_2(SAMPLE_HANDS_STR), 5905);
     }
 }
