@@ -4,8 +4,9 @@ use std::{fs::File, io::Read, path::Path, process::Command};
 
 use async_openai::{
     types::{
-        ChatCompletionRequestAssistantMessageArgs, ChatCompletionRequestSystemMessageArgs,
-        ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs,
+        ChatCompletionRequestSystemMessageArgs, ChatCompletionRequestUserMessageArgs,
+        ChatCompletionResponseFormat, ChatCompletionResponseFormatType,
+        CreateChatCompletionRequestArgs,
     },
     Client,
 };
@@ -63,12 +64,11 @@ fn main() {
                     let rs_path = Path::new(&day_rs_name);
                     if !rs_path.exists() {
                         println!("generating day {day} tests!");
-                        let test_case_unescaped = generate_sample_test_case(*day).await;
-                        let test_case = html_escape::decode_html_entities(&test_case_unescaped);
+                        let test_case = generate_sample_test_case(*day).await;
                         let mut output_file = File::create(rs_path).expect("Could not open file");
                         hb.render_to_write(
                             "day_tmpl",
-                            &json!({"formatted_day": formatted_day, "test_case": test_case}),
+                            &json!({"formatted_day": formatted_day, "test_case": test_case.rust_code}),
                             &mut output_file,
                         )
                         .expect("Could not write template");
@@ -88,6 +88,7 @@ fn main() {
                 5 => day05::run(),
                 6 => day06::run(),
                 7 => day07::run(),
+                8 => day08::run(),
                 _ => panic!("no such day"),
             };
 
@@ -103,6 +104,7 @@ fn main() {
                 5 => day05::run(),
                 6 => day06::run(),
                 7 => day07::run(),
+                8 => day08::run(),
                 _ => panic!("no such day"),
             };
 
@@ -131,7 +133,7 @@ fn main() {
                 .block_on(async {
                     let test_case = generate_sample_test_case(*day).await;
                     println!("got test case:");
-                    println!("{test_case}");
+                    println!("{}", test_case.rust_code);
                 })
         }
     }
@@ -166,7 +168,7 @@ mod tests {
         assert_eq!(answer_part_2(lines), 0);
     }
 
-    {{test_case}}
+    {{{test_case}}}
 }
 "#;
 
@@ -189,7 +191,7 @@ const DAY_3_TEST_EXAMPLE: &str = r##"
     }
 "##;
 
-async fn generate_sample_test_case(day: usize) -> String {
+async fn generate_sample_test_case(day: usize) -> RustCodeResponse {
     let client = Client::new();
     let puzzle_input_str = format!("puzzles/day{day:02}.md");
     let puzzle_input_path = Path::new(&puzzle_input_str);
@@ -203,17 +205,20 @@ async fn generate_sample_test_case(day: usize) -> String {
     let request = CreateChatCompletionRequestArgs::default()
         .max_tokens(1024u16)
         .model("gpt-4-1106-preview")
+        .response_format(ChatCompletionResponseFormat { r#type: ChatCompletionResponseFormatType::JsonObject })
         .messages([
             ChatCompletionRequestSystemMessageArgs::default()
-                .content("You are a puzzle sample test creation assistant. You take puzzle inputs and return a valid test case in Rust. Do not use html encoded characters in your response. Do not wrap the response in a code block! Write the code as it would be inserted in a Rust source file. Return only sample rust test cases and rust constants, do not try to implement the puzzle solution!")
+                .content("You are a puzzle sample test creation assistant. You take puzzle inputs and return a valid test case in Rust. Do not use html encoded characters in your response. Do not wrap the response in a code block! Write the code as it would be inserted in a Rust source file. Return only sample rust test cases and rust constants, do not try to implement the puzzle solution! Only output valid JSON! Rust code should be placed in the JSON object under the `rust_code` key only!")
                 .build().unwrap()
                 .into(),
-            ChatCompletionRequestUserMessageArgs::default()
+            ChatCompletionRequestSystemMessageArgs::default()
                 .content(day_3_puzzle)
+                .name("example_user")
                 .build().unwrap()
                 .into(),
-            ChatCompletionRequestAssistantMessageArgs::default()
+            ChatCompletionRequestSystemMessageArgs::default()
                 .content(DAY_3_TEST_EXAMPLE)
+                .name("example_assistant")
                 .build().unwrap()
                 .into(),
             ChatCompletionRequestUserMessageArgs::default()
@@ -223,7 +228,7 @@ async fn generate_sample_test_case(day: usize) -> String {
         ])
         .build().unwrap();
 
-    client
+    let content = client
         .chat()
         .create(request)
         .await
@@ -234,7 +239,14 @@ async fn generate_sample_test_case(day: usize) -> String {
         .message
         .content
         .clone()
-        .expect("content was unexpectedly empty")
+        .expect("content was unexpectedly empty");
+
+    serde_json::from_str(&content).unwrap()
+}
+
+#[derive(serde::Deserialize)]
+struct RustCodeResponse {
+    rust_code: String,
 }
 
 mod day01;
@@ -244,3 +256,4 @@ mod day04;
 mod day05;
 mod day06;
 mod day07;
+mod day08;
