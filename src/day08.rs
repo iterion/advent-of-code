@@ -89,11 +89,7 @@ impl Map {
             .map(|l| self.count_ghost_steps_on_path_to_any_z(l))
             .collect();
 
-        let min_to_zs_lcm = min_to_zs
-            .iter()
-            .copied()
-            .reduce(num::integer::lcm)
-            .unwrap();
+        let min_to_zs_lcm = min_to_zs.iter().copied().reduce(num::integer::lcm).unwrap();
 
         min_to_zs_lcm
     }
