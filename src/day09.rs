@@ -80,7 +80,7 @@ mod tests {
         assert_eq!(answer_part_2(lines), 923);
     }
 
-    const SAMPLE_REPORT: &'static str = r"0 3 6 9 12 15
+    const SAMPLE_REPORT: &str = r"0 3 6 9 12 15
 1 3 6 10 15 21
 10 13 16 21 30 45
 ";
