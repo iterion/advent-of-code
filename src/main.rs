@@ -10,7 +10,6 @@ use async_openai::{
     },
     Client,
 };
-
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 #[command(propagate_version = true)]
@@ -21,10 +20,20 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    Bootstrap { day: usize },
-    PrintSolution { day: usize },
-    Submit { day: usize, part: usize },
-    TestCompletion { day: usize },
+    Bootstrap {
+        day: usize,
+    },
+    #[command(alias = "print")]
+    PrintSolution {
+        day: usize,
+    },
+    Submit {
+        day: usize,
+        part: usize,
+    },
+    TestCompletion {
+        day: usize,
+    },
 }
 
 fn main() {
@@ -80,37 +89,13 @@ fn main() {
                 .expect("expected fmt to work");
         }
         Commands::PrintSolution { day } => {
-            let (part_1, part_2) = match day {
-                1 => day01::run(),
-                2 => day02::run(),
-                3 => day03::run(),
-                4 => day04::run(),
-                5 => day05::run(),
-                6 => day06::run(),
-                7 => day07::run(),
-                8 => day08::run(),
-                9 => day09::run(),
-                10 => day10::run(),
-                _ => panic!("no such day"),
-            };
+            let (part_1, part_2) = run_day(*day);
 
             println!("answer_part_1: {part_1:?}");
             println!("answer_part_2: {part_2:?}");
         }
         Commands::Submit { day, part } => {
-            let (part_1, part_2) = match day {
-                1 => day01::run(),
-                2 => day02::run(),
-                3 => day03::run(),
-                4 => day04::run(),
-                5 => day05::run(),
-                6 => day06::run(),
-                7 => day07::run(),
-                8 => day08::run(),
-                9 => day09::run(),
-                10 => day10::run(),
-                _ => panic!("no such day"),
-            };
+            let (part_1, part_2) = run_day(*day);
 
             let answer = if part == &1 { part_1 } else { part_2 };
             println!("submitting answer for part {part}: {answer}");
@@ -251,6 +236,22 @@ async fn generate_sample_test_case(day: usize) -> RustCodeResponse {
 #[derive(serde::Deserialize)]
 struct RustCodeResponse {
     rust_code: String,
+}
+
+fn run_day(day: usize) -> (usize, usize) {
+    match day {
+        1 => day01::run(),
+        2 => day02::run(),
+        3 => day03::run(),
+        4 => day04::run(),
+        5 => day05::run(),
+        6 => day06::run(),
+        7 => day07::run(),
+        8 => day08::run(),
+        9 => day09::run(),
+        10 => day10::run(),
+        _ => panic!("no such day"),
+    }
 }
 
 mod day01;
