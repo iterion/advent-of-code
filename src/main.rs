@@ -252,6 +252,7 @@ fn run_day(day: usize) -> (usize, usize) {
         10 => day10::run(),
         11 => day11::run(),
         12 => day12::run(),
+        13 => day13::run(),
         _ => panic!("no such day"),
     }
 }
@@ -268,3 +269,4 @@ mod day09;
 mod day10;
 mod day11;
 mod day12;
+mod day13;

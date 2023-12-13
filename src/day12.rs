@@ -193,7 +193,7 @@ impl ConditionReport {
 
     fn v3_valid_condition_count(&self) -> usize {
         let base_count = self.valid_condition_count(&self.condition, &self.criteria);
-        let last_spring = self.condition.springs.last().unwrap().clone();
+        let _last_spring = self.condition.springs.last().unwrap().clone();
         let mut end_with_unknown = self.condition.springs.clone();
         end_with_unknown.push(SpringCondition::Unknown);
         let end = Condition {
