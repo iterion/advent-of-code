@@ -32,7 +32,7 @@ fn get_input_string() -> &'static str {
 }
 
 fn parse_all_condition_reports(lines: &str) -> Vec<ConditionReport> {
-    lines.lines().map(|l| ConditionReport::parse(l)).collect()
+    lines.lines().map(ConditionReport::parse).collect()
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -60,10 +60,11 @@ struct Condition {
 
 impl Condition {
     fn parse(line: &str) -> Self {
-        let springs = line.chars().map(|c| SpringCondition::parse(c)).collect();
+        let springs = line.chars().map(SpringCondition::parse).collect();
         Self { springs }
     }
 
+    #[allow(dead_code)]
     fn repeated_version(&self) -> Self {
         let mut springs = self.springs.clone();
         springs.push(SpringCondition::Unknown);
@@ -182,6 +183,7 @@ impl ConditionReport {
         possible_conditions
     }
 
+    #[allow(dead_code)]
     fn v2_valid_condition_count(&self) -> usize {
         let base_count = self.valid_condition_count(&self.condition, &self.criteria);
         let mut repeat_criteria = self.criteria.clone();
@@ -193,7 +195,7 @@ impl ConditionReport {
 
     fn v3_valid_condition_count(&self) -> usize {
         let base_count = self.valid_condition_count(&self.condition, &self.criteria);
-        let _last_spring = self.condition.springs.last().unwrap().clone();
+        let _last_spring = *self.condition.springs.last().unwrap();
         let mut end_with_unknown = self.condition.springs.clone();
         end_with_unknown.push(SpringCondition::Unknown);
         let end = Condition {

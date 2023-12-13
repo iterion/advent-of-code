@@ -54,10 +54,8 @@ impl Map {
                 }
             } else if v2 {
                 let distance = levenshtein::levenshtein(a, b);
-                if distance <= 1 {
-                    if self.is_valid_horizontal_mirror(row, v2, distance == 1) {
-                        return Some((row + 1) * 100);
-                    }
+                if distance <= 1 && self.is_valid_horizontal_mirror(row, v2, distance == 1) {
+                    return Some((row + 1) * 100);
                 }
             }
         }
@@ -75,16 +73,18 @@ impl Map {
                 return false;
             } else if v2 {
                 let distance = levenshtein::levenshtein(row_a, row_b);
-                // not close enough, always reject
-                if distance > 1 {
-                    return false;
-                } else if distance == 1 {
-                    // one smudge ok, two smudge get outta here
-                    // wasn't true in practice, but oh well
-                    if was_smudged {
-                        return false;
+                match distance.cmp(&1) {
+                    std::cmp::Ordering::Less => (),
+                    std::cmp::Ordering::Equal => {
+                        // one smudge ok, two smudge get outta here
+                        // wasn't true in practice, but oh well
+                        if was_smudged {
+                            return false;
+                        }
+                        was_smudged = true;
                     }
-                    was_smudged = true;
+                    // too many smudges
+                    std::cmp::Ordering::Greater => return false,
                 }
             }
             a -= 1;
@@ -106,14 +106,12 @@ impl Map {
             let b = &self.cols[col + 1];
             if a == b {
                 if self.is_valid_vertical_mirror(col, v2, false) {
-                    return Some((col + 1));
+                    return Some(col + 1);
                 }
             } else if v2 {
                 let distance = levenshtein::levenshtein(a, b);
-                if distance == 1 {
-                    if self.is_valid_vertical_mirror(col, v2, true) {
-                        return Some(col + 1);
-                    }
+                if distance == 1 && self.is_valid_vertical_mirror(col, v2, true) {
+                    return Some(col + 1);
                 }
             }
         }
@@ -131,15 +129,18 @@ impl Map {
                 return false;
             } else if v2 {
                 let distance = levenshtein::levenshtein(col_a, col_b);
-                // not close enough, always reject
-                if distance > 1 {
-                    return false;
-                } else if distance == 1 {
-                    // one smudge ok, two smudge get outta here
-                    if was_smudged {
-                        return false;
+                match distance.cmp(&1) {
+                    std::cmp::Ordering::Less => (),
+                    std::cmp::Ordering::Equal => {
+                        // one smudge ok, two smudge get outta here
+                        // wasn't true in practice, but oh well
+                        if was_smudged {
+                            return false;
+                        }
+                        was_smudged = true;
                     }
-                    was_smudged = true;
+                    // too many smudges
+                    std::cmp::Ordering::Greater => return false,
                 }
             }
             a -= 1;
@@ -164,7 +165,7 @@ impl AllMaps {
         let mut maps = vec![];
         let mut rows = vec![];
         for line in lines.lines() {
-            if line.len() == 0 {
+            if line.is_empty() {
                 maps.push(Map::from_rows(rows.clone()));
                 rows = vec![];
             } else {
@@ -172,7 +173,7 @@ impl AllMaps {
             }
         }
         // may not have a trailing empty line
-        if rows.len() != 0 {
+        if !rows.is_empty() {
             maps.push(Map::from_rows(rows.clone()));
         }
         Self { maps }
@@ -195,10 +196,10 @@ mod tests {
         let lines = get_input_string();
 
         assert_eq!(answer_part_1(lines), 27202);
-        assert_eq!(answer_part_2(lines), 0);
+        assert_eq!(answer_part_2(lines), 41566);
     }
 
-    const SAMPLE_INPUT: &'static str = r"#.##..##.
+    const SAMPLE_INPUT: &str = r"#.##..##.
 ..#.##.#.
 ##......#
 ##......#
