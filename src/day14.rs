@@ -36,32 +36,36 @@ fn answer_part_2(lines: &str) -> usize {
     let size = find_load_history_pattern_size(&load_history);
     println!("{size}");
     let history_len = load_history.len();
-    let pattern = load_history[(history_len-size)..history_len].to_vec();
+    let pattern = load_history[(history_len - size)..history_len].to_vec();
 
     let location = 1_000_000_000 % size;
     let current = (size - 1) - (history_len % size);
     println!("{pattern:?}");
     println!("{history_len} {location} {current}");
-    pattern[location+current]
+    pattern[location + current]
 }
 
 fn find_load_history_pattern_size(load_history: &Vec<usize>) -> usize {
     let history_len = load_history.len() - 1;
     for i in (3..500) {
-        let mut comparison = load_history[(history_len-i)..history_len].to_vec();
+        let mut comparison = load_history[(history_len - i)..history_len].to_vec();
         comparison.append(&mut comparison.clone());
         let comparison_size = comparison.len();
-        if comparison.iter().enumerate().find(|(j, v)| {
-            let offset = comparison_size - *j;
-            load_history[history_len - offset] != **v
-        }).is_none() {
+        if comparison
+            .iter()
+            .enumerate()
+            .find(|(j, v)| {
+                let offset = comparison_size - *j;
+                load_history[history_len - offset] != **v
+            })
+            .is_none()
+        {
             // we never found a mismatch, so this is the size of the pattern
             return i;
         }
     }
     0
 }
-
 
 fn get_input_string() -> &'static str {
     include_str!("../inputs/day14.txt")
