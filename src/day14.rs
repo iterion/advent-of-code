@@ -16,7 +16,7 @@ fn answer_part_2(lines: &str) -> usize {
     let mut field = parse(lines);
 
     let mut load_history = vec![];
-    for i in 0..1_000 {
+    for _i in 0..1_000 {
         // north
         field.shift_load_north();
         field.grid.rotate_right();
@@ -47,18 +47,17 @@ fn answer_part_2(lines: &str) -> usize {
 
 fn find_load_history_pattern_size(load_history: &Vec<usize>) -> usize {
     let history_len = load_history.len() - 1;
-    for i in (3..500) {
+    for i in 3..500 {
         let mut comparison = load_history[(history_len - i)..history_len].to_vec();
         comparison.append(&mut comparison.clone());
         let comparison_size = comparison.len();
         if comparison
             .iter()
             .enumerate()
-            .find(|(j, v)| {
-                let offset = comparison_size - *j;
-                load_history[history_len - offset] != **v
+            .any(|(j, v)| {
+                let offset = comparison_size - j;
+                load_history[history_len - offset] != *v
             })
-            .is_none()
         {
             // we never found a mismatch, so this is the size of the pattern
             return i;
@@ -106,9 +105,9 @@ struct FocusField {
 impl FocusField {
     fn calculate_load(&self) -> usize {
         let rows = self.grid.rows();
-        let cols = self.grid.cols();
+        let _cols = self.grid.cols();
         let mut total_load = 0;
-        for ((row, column), v) in self.grid.indexed_iter() {
+        for ((row, _column), v) in self.grid.indexed_iter() {
             if v == &Space::RoundRock {
                 let row_value = rows - row;
                 total_load += row_value;
@@ -121,7 +120,7 @@ impl FocusField {
     fn shift_load_north(&mut self) {
         let rows = self.grid.rows();
         let cols = self.grid.cols();
-        let mut total_load = 0;
+        let _total_load = 0;
 
         for i in 0..(rows * cols) {
             let row = i / cols;
@@ -190,7 +189,7 @@ mod tests {
         assert_eq!(answer_part_2(lines), 105008);
     }
 
-    const SAMPLE_INPUT: &'static str = r#"O....#....
+    const SAMPLE_INPUT: &str = r#"O....#....
 O.OO#....#
 .....##...
 OO.#O....O
