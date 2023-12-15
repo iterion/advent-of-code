@@ -51,14 +51,10 @@ fn find_load_history_pattern_size(load_history: &Vec<usize>) -> usize {
         let mut comparison = load_history[(history_len - i)..history_len].to_vec();
         comparison.append(&mut comparison.clone());
         let comparison_size = comparison.len();
-        if comparison
-            .iter()
-            .enumerate()
-            .any(|(j, v)| {
-                let offset = comparison_size - j;
-                load_history[history_len - offset] != *v
-            })
-        {
+        if comparison.iter().enumerate().any(|(j, v)| {
+            let offset = comparison_size - j;
+            load_history[history_len - offset] != *v
+        }) {
             // we never found a mismatch, so this is the size of the pattern
             return i;
         }
