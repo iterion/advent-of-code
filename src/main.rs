@@ -36,6 +36,8 @@ enum Commands {
     },
 }
 
+const CURRENT_YEAR: u16 = 2024;
+
 fn main() {
     let cli = Cli::parse();
 
@@ -51,9 +53,9 @@ fn main() {
                     &day.to_string(),
                     "--overwrite",
                     "--input-file",
-                    &format!("inputs/day{formatted_day}.txt"),
+                    &format!("inputs/{CURRENT_YEAR}/day{formatted_day}.txt"),
                     "--puzzle-file",
-                    &format!("puzzles/day{formatted_day}.md"),
+                    &format!("puzzles/{CURRENT_YEAR}/day{formatted_day}.md"),
                     "download",
                 ])
                 .output()
@@ -240,39 +242,24 @@ struct RustCodeResponse {
 
 fn run_day(day: usize) -> (usize, usize) {
     match day {
-        1 => day01::run(),
-        2 => day02::run(),
-        3 => day03::run(),
-        4 => day04::run(),
-        5 => day05::run(),
-        6 => day06::run(),
-        7 => day07::run(),
-        8 => day08::run(),
-        9 => day09::run(),
-        10 => day10::run(),
-        11 => day11::run(),
-        12 => day12::run(),
-        13 => day13::run(),
-        14 => day14::run(),
-        15 => day15::run(),
-        16 => day16::run(),
+        1 => aoc2023::day01::run(),
+        2 => aoc2023::day02::run(),
+        3 => aoc2023::day03::run(),
+        4 => aoc2023::day04::run(),
+        5 => aoc2023::day05::run(),
+        6 => aoc2023::day06::run(),
+        7 => aoc2023::day07::run(),
+        8 => aoc2023::day08::run(),
+        9 => aoc2023::day09::run(),
+        10 => aoc2023::day10::run(),
+        11 => aoc2023::day11::run(),
+        12 => aoc2023::day12::run(),
+        13 => aoc2023::day13::run(),
+        14 => aoc2023::day14::run(),
+        15 => aoc2023::day15::run(),
+        16 => aoc2023::day16::run(),
         _ => panic!("no such day"),
     }
 }
 
-mod day01;
-mod day02;
-mod day03;
-mod day04;
-mod day05;
-mod day06;
-mod day07;
-mod day08;
-mod day09;
-mod day10;
-mod day11;
-mod day12;
-mod day13;
-mod day14;
-mod day15;
-mod day16;
+mod aoc2023;
