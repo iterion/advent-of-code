@@ -73,7 +73,7 @@ fn verifyLevels(levels: std.ArrayList(i64)) LevelResult {
     return LevelResult{ .success = true };
 }
 
-fn solvePartOne(input: []const u8) !i64 {
+pub fn solvePartOne(input: []const u8) !i64 {
     var safe_rows: i64 = 0;
     var lines = std.mem.splitScalar(u8, input, '\n');
     while (lines.next()) |line| {
@@ -90,7 +90,7 @@ fn solvePartOne(input: []const u8) !i64 {
     return safe_rows;
 }
 
-fn solvePartTwo(input: []const u8) !i64 {
+pub fn solvePartTwo(input: []const u8) !i64 {
     var safe_rows: i64 = 0;
     var lines = std.mem.splitScalar(u8, input, '\n');
     while (lines.next()) |line| {
@@ -118,31 +118,4 @@ fn solvePartTwo(input: []const u8) !i64 {
         }
     }
     return safe_rows;
-}
-
-pub fn partOne() !i64 {
-    const file = try std.fs.cwd().openFile("./inputs/2024/day02.txt", .{});
-    defer file.close();
-    const stat = try file.stat();
-
-    const contents = try file.reader().readAllAlloc(
-        allocator,
-        stat.size,
-    );
-    defer allocator.free(contents);
-    const answer = try solvePartOne(contents);
-    return answer;
-}
-
-pub fn partTwo() !i64 {
-    const file = try std.fs.cwd().openFile("./inputs/2024/day02.txt", .{});
-    defer file.close();
-    const stat = try file.stat();
-
-    const contents = try file.reader().readAllAlloc(
-        allocator,
-        stat.size,
-    );
-    defer allocator.free(contents);
-    return try solvePartTwo(contents);
 }

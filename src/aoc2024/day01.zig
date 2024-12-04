@@ -15,7 +15,7 @@ const allocator = gpa.allocator();
 const ArrayList = std.ArrayList;
 
 test "part one" {
-    const answer = try splitInput(first_example);
+    const answer = try solvePartOne(first_example);
     try std.testing.expectEqual(answer, first_example_answer);
 }
 
@@ -24,7 +24,7 @@ test "part two" {
     try std.testing.expectEqual(answer, second_example_answer);
 }
 
-fn splitInput(input: []const u8) !i64 {
+pub fn solvePartOne(input: []const u8) !i64 {
     var list1 = ArrayList(i64).init(allocator);
     var list2 = ArrayList(i64).init(allocator);
     defer list1.deinit();
@@ -57,7 +57,7 @@ fn splitInput(input: []const u8) !i64 {
     return sum;
 }
 
-fn solvePartTwo(input: []const u8) !i64 {
+pub fn solvePartTwo(input: []const u8) !i64 {
     var list1 = ArrayList(i64).init(allocator);
     var list2 = ArrayList(i64).init(allocator);
     defer list1.deinit();
@@ -83,31 +83,4 @@ fn solvePartTwo(input: []const u8) !i64 {
     }
 
     return sum;
-}
-
-pub fn partOne() !i64 {
-    const file = try std.fs.cwd().openFile("./inputs/2024/day01.txt", .{});
-    defer file.close();
-    const stat = try file.stat();
-
-    const contents = try file.reader().readAllAlloc(
-        allocator,
-        stat.size,
-    );
-    defer allocator.free(contents);
-    const answer = try splitInput(contents);
-    return answer;
-}
-
-pub fn partTwo() !i64 {
-    const file = try std.fs.cwd().openFile("./inputs/2024/day01.txt", .{});
-    defer file.close();
-    const stat = try file.stat();
-
-    const contents = try file.reader().readAllAlloc(
-        allocator,
-        stat.size,
-    );
-    defer allocator.free(contents);
-    return try solvePartTwo(contents);
 }

@@ -18,7 +18,7 @@ test "part two" {
     try std.testing.expectEqual(answer, second_example_answer);
 }
 
-fn solvePartOne(input: []const u8) !i64 {
+pub fn solvePartOne(input: []const u8) !i64 {
     var total: i64 = 0;
     var i: usize = 0;
     outer: while (i < input.len) {
@@ -37,7 +37,7 @@ fn solvePartOne(input: []const u8) !i64 {
                             continue :outer;
                         }
                         comma_index = new_i;
-                        const lhs_str = input[mul_start .. comma_index];
+                        const lhs_str = input[mul_start..comma_index];
                         lhs = try std.fmt.parseInt(i64, lhs_str, 10);
                         new_i += 1;
                     } else if (val == ')') {
@@ -65,9 +65,8 @@ fn solvePartOne(input: []const u8) !i64 {
     return total;
 }
 
-fn solvePartTwo(input: []const u8) !i64 {
+pub fn solvePartTwo(input: []const u8) !i64 {
     var total: i64 = 0;
-    std.debug.print("{s}\n", .{input});
     var i: usize = 0;
     var enabled: bool = true;
     outer: while (i < input.len) {
@@ -86,13 +85,12 @@ fn solvePartTwo(input: []const u8) !i64 {
                             continue :outer;
                         }
                         comma_index = new_i;
-                        const lhs_str = input[mul_start .. comma_index];
+                        const lhs_str = input[mul_start..comma_index];
                         lhs = try std.fmt.parseInt(i64, lhs_str, 10);
                         new_i += 1;
                     } else if (val == ')') {
                         if (comma_index != 0) {
                             const rhs_str = input[comma_index + 1 .. new_i];
-                            std.debug.print("{s} = {d}..{d}\n", .{rhs_str, comma_index, new_i});
                             const rhs = try std.fmt.parseInt(i64, rhs_str, 10);
                             total += lhs * rhs;
                             i = new_i;
@@ -111,10 +109,10 @@ fn solvePartTwo(input: []const u8) !i64 {
             }
             i += 1;
         } else if (input[i] == 'd') {
-            if (std.mem.eql(u8, input[i..i+4], "do()")) {
+            if (std.mem.eql(u8, input[i .. i + 4], "do()")) {
                 enabled = true;
                 i += 4;
-            } else if (std.mem.eql(u8, input[i..i+7], "don't()")) {
+            } else if (std.mem.eql(u8, input[i .. i + 7], "don't()")) {
                 enabled = false;
                 i += 7;
             }
@@ -123,31 +121,4 @@ fn solvePartTwo(input: []const u8) !i64 {
         }
     }
     return total;
-}
-
-pub fn partOne() !i64 {
-    const file = try std.fs.cwd().openFile("./inputs/2024/day03.txt", .{});
-    defer file.close();
-    const stat = try file.stat();
-
-    const contents = try file.reader().readAllAlloc(
-        allocator,
-        stat.size,
-    );
-    defer allocator.free(contents);
-    const answer = try solvePartOne(contents);
-    return answer;
-}
-
-pub fn partTwo() !i64 {
-    const file = try std.fs.cwd().openFile("./inputs/2024/day03.txt", .{});
-    defer file.close();
-    const stat = try file.stat();
-
-    const contents = try file.reader().readAllAlloc(
-        allocator,
-        stat.size,
-    );
-    defer allocator.free(contents);
-    return try solvePartTwo(contents);
 }
