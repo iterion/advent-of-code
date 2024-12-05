@@ -193,32 +193,24 @@ pub fn fix_order(rules_and_updates: RulesAndUpdates, update: ArrayList(i64)) voi
         if (i == 0) {
             for (update.items[i + 1 ..]) |*item| {
                 if (!checkRule(rules_and_updates.rules, item.*, update_item.*)) {
-                    const temp = item.*;
-                    item.* = update_item.*;
-                    update_item.* = temp;
+                    std.mem.swap(i64, item, update_item);
                 }
             }
         } else if (i == update.items.len - 1) {
             for (update.items[0 .. i - 1]) |*item| {
                 if (!checkRule(rules_and_updates.reverse_rules, item.*, update_item.*)) {
-                    const temp = item.*;
-                    item.* = update_item.*;
-                    update_item.* = temp;
+                    std.mem.swap(i64, item, update_item);
                 }
             }
         } else {
             for (update.items[0 .. i - 1]) |*item| {
                 if (!checkRule(rules_and_updates.reverse_rules, item.*, update_item.*)) {
-                    const temp = item.*;
-                    item.* = update_item.*;
-                    update_item.* = temp;
+                    std.mem.swap(i64, item, update_item);
                 }
             }
             for (update.items[i + 1 ..]) |*item| {
                 if (!checkRule(rules_and_updates.rules, item.*, update_item.*)) {
-                    const temp = item.*;
-                    item.* = update_item.*;
-                    update_item.* = temp;
+                    std.mem.swap(i64, item, update_item);
                 }
             }
         }

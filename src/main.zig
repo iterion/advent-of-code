@@ -105,8 +105,12 @@ pub fn main() !void {
             var bench = zbench.Benchmark.init(std.heap.page_allocator, .{});
             defer bench.deinit();
 
-            try bench.addParam("part 1", &BenchDay.init(contents, day, 1), .{});
-            try bench.addParam("part 2", &BenchDay.init(contents, day, 2), .{});
+            try bench.addParam("part 1", &BenchDay.init(contents, day, 1), .{
+                .track_allocations = true,
+            });
+            try bench.addParam("part 2", &BenchDay.init(contents, day, 2), .{
+                .track_allocations = true,
+            });
 
             try stdout.writeAll("\n");
             try bench.run(stdout);

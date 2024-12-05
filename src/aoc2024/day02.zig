@@ -47,10 +47,10 @@ const LevelResult = union(LevelVerify) {
     failed: usize,
 };
 
-fn verifyLevels(levels: std.ArrayList(i64)) LevelResult {
+fn verifyLevels(levels: []i64) LevelResult {
     // pop first level off so we can start comparing below
-    const first_level = levels.items[0];
-    const second_level = levels.items[1];
+    const first_level = levels[0];
+    const second_level = levels[1];
     const initial_diff = first_level - second_level;
     if (@abs(initial_diff) > 3 or initial_diff == 0) {
         return LevelResult{ .failed = 1 };
@@ -59,7 +59,7 @@ fn verifyLevels(levels: std.ArrayList(i64)) LevelResult {
     // put it in last_level for comparison in loop
     var last_level = second_level;
     // first time in loop
-    for (levels.items[2..], 2..) |level, i| {
+    for (levels[2..], 2..) |level, i| {
         const diff = last_level - level;
         const new_direction = toDirection(diff);
         if (@abs(diff) > 3 or diff == 0 or last_direction != new_direction) {
@@ -80,7 +80,7 @@ pub fn solvePartOne(allocator: std.mem.Allocator, input: []const u8) !i64 {
             continue;
         }
         const levels = try parseLineToArrayList(allocator, line);
-        switch (verifyLevels(levels)) {
+        switch (verifyLevels(levels.items)) {
             .success => safe_rows += 1,
             .failed => {},
         }
@@ -97,14 +97,15 @@ pub fn solvePartTwo(allocator: std.mem.Allocator, input: []const u8) !i64 {
             continue;
         }
         var levels = try parseLineToArrayList(allocator, line);
-        switch (verifyLevels(levels)) {
+        switch (verifyLevels(levels.items)) {
             .success => safe_rows += 1,
             .failed => {
                 var i: usize = 0;
+                var origLevels: ArrayList(i64) = undefined;
                 while (i < levels.items.len) : (i += 1) {
-                    var clonedLevels = try levels.clone();
-                    _ = clonedLevels.orderedRemove(i);
-                    switch (verifyLevels(clonedLevels)) {
+                    origLevels = try levels.clone();
+                    _ = origLevels.orderedRemove(i);
+                    switch (verifyLevels(origLevels.items)) {
                         .success => {
                             safe_rows += 1;
                             break;
