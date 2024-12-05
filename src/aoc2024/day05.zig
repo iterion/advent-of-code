@@ -1,9 +1,6 @@
 const std = @import("std");
 const ArrayList = std.ArrayList;
 
-const target: []const u8 = "XMAS";
-const dummy_char: u8 = 'n';
-const dummy: [4]u8 = .{ dummy_char, dummy_char, dummy_char, dummy_char };
 const example: []const u8 =
     \\47|53
     \\97|13
@@ -233,28 +230,14 @@ pub fn solvePartTwo(allocator: std.mem.Allocator, input: []const u8) !i64 {
     var rules_and_updates = try parseRulesAndUpdates(allocator, input);
 
     for (rules_and_updates.updates.items) |update| {
-        // var fix_iter: usize = 0;
         if (!try checkUpdateAgainstRules(allocator, update, rules_and_updates.rules, rules_and_updates.reverse_rules)) {
-            // while (fix_iter < 50) {
             // sort the list with the rules and context of the array
             fix_order(rules_and_updates, update);
-            // for (update.items) |*update_item| {
-            //     std.debug.print("{d}-", .{update_item.*});
-            // }
-            // std.debug.print("\n", .{});
             if (!try checkUpdateAgainstRules(allocator, update, rules_and_updates.rules, rules_and_updates.reverse_rules)) {
                 std.debug.print("failed update!", .{});
             }
-            //     if (fix_iter == 49) {
-            //         @panic("OOOOO");
-            //     }
-            //     fix_iter += 1;
-            // } else {
             const item_to_add = update.items[update.items.len / 2];
             total += item_to_add;
-            // break;
-            // }
-            // }
         }
         // deinit these here, and not before!
         update.deinit();
