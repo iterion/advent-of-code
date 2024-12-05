@@ -180,3 +180,7 @@ pub fn runDayAndPart(allocator: std.mem.Allocator, contents: []const u8, day: us
         else => return error.InvalidPart,
     };
 }
+
+test "aoc2024" {
+    @import("std").testing.refAllDecls(aoc2024);
+}

@@ -5,12 +5,14 @@ const first_example_answer: i64 = 161;
 const second_example_answer: i64 = 48;
 
 test "part one" {
-    const answer = try solvePartOne(example);
+    const allocator = std.testing.allocator;
+    const answer = try solvePartOne(allocator, example);
     try std.testing.expectEqual(answer, first_example_answer);
 }
 
 test "part two" {
-    const answer = try solvePartTwo(second_example);
+    const allocator = std.testing.allocator;
+    const answer = try solvePartTwo(allocator, second_example);
     try std.testing.expectEqual(answer, second_example_answer);
 }
 

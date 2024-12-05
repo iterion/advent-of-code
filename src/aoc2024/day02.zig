@@ -13,12 +13,14 @@ const first_example_answer: i64 = 2;
 const second_example_answer: i64 = 4;
 
 test "part one" {
-    const answer = try solvePartOne(example);
+    const allocator = std.testing.allocator;
+    const answer = try solvePartOne(allocator, example);
     try std.testing.expectEqual(answer, first_example_answer);
 }
 
 test "part two" {
-    const answer = try solvePartTwo(example);
+    const allocator = std.testing.allocator;
+    const answer = try solvePartTwo(allocator, example);
     try std.testing.expectEqual(answer, second_example_answer);
 }
 
@@ -80,6 +82,7 @@ pub fn solvePartOne(allocator: std.mem.Allocator, input: []const u8) !i64 {
             continue;
         }
         const levels = try parseLineToArrayList(allocator, line);
+        defer levels.deinit();
         switch (verifyLevels(levels.items)) {
             .success => safe_rows += 1,
             .failed => {},
@@ -97,13 +100,14 @@ pub fn solvePartTwo(allocator: std.mem.Allocator, input: []const u8) !i64 {
             continue;
         }
         var levels = try parseLineToArrayList(allocator, line);
+        defer levels.deinit();
         switch (verifyLevels(levels.items)) {
             .success => safe_rows += 1,
             .failed => {
                 var i: usize = 0;
-                var origLevels: ArrayList(i64) = undefined;
                 while (i < levels.items.len) : (i += 1) {
-                    origLevels = try levels.clone();
+                    var origLevels = try levels.clone();
+                    defer origLevels.deinit();
                     _ = origLevels.orderedRemove(i);
                     switch (verifyLevels(origLevels.items)) {
                         .success => {
