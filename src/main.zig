@@ -1,9 +1,11 @@
 const std = @import("std");
 const clap = @import("clap");
+const zbench = @import("zbench");
 const aoc2024 = @import("aoc2024/root.zig");
 
 const SubCommands = enum {
     run,
+    bench,
 };
 
 const main_parsers = .{
@@ -16,6 +18,20 @@ const main_params = clap.parseParamsComptime(
     \\<command>
     \\
 );
+
+const BenchDay = struct {
+    content: []const u8,
+    day: usize,
+    part: usize,
+
+    fn init(content: []const u8, day: usize, part: usize) BenchDay {
+        return .{ .content = content, .day = day, .part = part };
+    }
+
+    pub fn run(self: BenchDay, allocator: std.mem.Allocator) void {
+        _ = runDayAndPart(allocator, self.content, self.day, self.part) catch @panic("oops");
+    }
+};
 
 // To pass around arguments returned by clap, `clap.Result` and `clap.ResultEx` can be used to
 // get the return type of `clap.parse` and `clap.parseEx`.
@@ -55,61 +71,45 @@ pub fn main() !void {
     if (res.args.help != 0)
         std.debug.print("--help\n", .{});
 
+    // The parameters for the subcommand.
+    const params = comptime clap.parseParamsComptime(
+        \\-h, --help  Display this help and exit.
+        \\<usize>
+        \\
+    );
+
+    var res2 = clap.parseEx(clap.Help, &params, clap.parsers.default, &iter, .{
+        .diagnostic = &diag,
+        .allocator = gpa,
+    }) catch |err| {
+        diag.report(std.io.getStdErr().writer(), err) catch {};
+        return err;
+    };
+    defer res2.deinit();
+
+    const day = res2.positionals[0] orelse return error.MissingArg1;
+    const contents = try getFileForDay(gpa, day);
+    defer gpa.free(contents);
     const command = res.positionals[0] orelse return error.MissingCommand;
     switch (command) {
         .run => {
-            // The parameters for the subcommand.
-            const params = comptime clap.parseParamsComptime(
-                \\-h, --help  Display this help and exit.
-                \\<usize>
-                \\
-            );
+            var timer = try std.time.Timer.start();
+            const answer_1 = try runDayAndPart(gpa, contents, day, 1);
+            const t1 = timer.lap();
+            const answer_2 = try runDayAndPart(gpa, contents, day, 2);
+            const t2 = timer.lap();
+            try stdout.print("day {d} - part 1: {d} - {d}μs\n", .{ day, answer_1, t1 / 1000 });
+            try stdout.print("day {d} - part 2: {d} - {d}μs\n", .{ day, answer_2, t2 / 1000 });
+        },
+        .bench => {
+            var bench = zbench.Benchmark.init(std.heap.page_allocator, .{});
+            defer bench.deinit();
 
-            var res2 = clap.parseEx(clap.Help, &params, clap.parsers.default, &iter, .{
-                .diagnostic = &diag,
-                .allocator = gpa,
-            }) catch |err| {
-                diag.report(std.io.getStdErr().writer(), err) catch {};
-                return err;
-            };
-            defer res2.deinit();
+            try bench.addParam("part 1", &BenchDay.init(contents, day, 1), .{});
+            try bench.addParam("part 2", &BenchDay.init(contents, day, 2), .{});
 
-            const day = res2.positionals[0] orelse return error.MissingArg1;
-            const contents = try getFileForDay(gpa, day);
-            defer gpa.free(contents);
-            switch (day) {
-                1 => {
-                    try stdout.print("day 1 - part 1: {d}\n", .{try aoc2024.day01.solvePartOne(contents)});
-                    try stdout.print("day 1 - part 2: {d}\n", .{try aoc2024.day01.solvePartTwo(contents)});
-                },
-                2 => {
-                    try stdout.print("day 2 - part 1: {d}\n", .{try aoc2024.day02.solvePartOne(contents)});
-                    try stdout.print("day 2 - part 2: {d}\n", .{try aoc2024.day02.solvePartTwo(contents)});
-                },
-                3 => {
-                    var timer = try std.time.Timer.start();
-                    const p1 = try aoc2024.day03.solvePartOne(contents);
-                    const t1 = timer.lap();
-                    const p2 = try aoc2024.day03.solvePartTwo(contents);
-                    const t2 = timer.lap();
-                    std.debug.print("part 1: {d}, part 2: {d}\n", .{ t1 / 100000, t2 / 100000 });
-                    try stdout.print("day 3 - part 1: {d}\n", .{p1});
-                    try stdout.print("day 3 - part 2: {d}\n", .{p2});
-                },
-                4 => {
-                    var timer = try std.time.Timer.start();
-                    const p1 = try aoc2024.day04.solvePartOne(contents);
-                    const t1 = timer.lap();
-                    const p2 = try aoc2024.day04.solvePartTwo(contents);
-                    const t2 = timer.lap();
-                    std.debug.print("part 1: {d}, part 2: {d}\n", .{ t1 / 100000, t2 / 100000 });
-                    try stdout.print("day 4 - part 1: {d}\n", .{p1});
-                    try stdout.print("day 4 - part 2: {d}\n", .{p2});
-                },
-                else => {
-                    try stdout.print("unknown day\n", .{});
-                },
-            }
+            try stdout.writeAll("\n");
+            try bench.run(stdout);
         },
     }
 
@@ -134,4 +134,45 @@ fn getFileForDay(allocator: std.mem.Allocator, day: usize) ![]const u8 {
         stat.size,
     );
     return contents;
+}
+
+pub fn runDayAndPart(allocator: std.mem.Allocator, contents: []const u8, day: usize, part: usize) !i64 {
+    const PartFunction = fn (allocator: std.mem.Allocator, contents: []const u8) anyerror!i64;
+
+    var solvePartOne: ?*const PartFunction = null;
+    var solvePartTwo: ?*const PartFunction = null;
+
+    switch (day) {
+        1 => {
+            solvePartOne = aoc2024.day01.solvePartOne;
+            solvePartTwo = aoc2024.day01.solvePartTwo;
+        },
+        2 => {
+            solvePartOne = aoc2024.day02.solvePartOne;
+            solvePartTwo = aoc2024.day02.solvePartTwo;
+        },
+        3 => {
+            solvePartOne = aoc2024.day03.solvePartOne;
+            solvePartTwo = aoc2024.day03.solvePartTwo;
+        },
+        4 => {
+            solvePartOne = aoc2024.day04.solvePartOne;
+            solvePartTwo = aoc2024.day04.solvePartTwo;
+        },
+        5 => {
+            solvePartOne = aoc2024.day05.solvePartOne;
+            solvePartTwo = aoc2024.day05.solvePartTwo;
+        },
+        else => return error.InvalidDay,
+    }
+
+    if (solvePartOne == null or solvePartTwo == null) {
+        return error.InvalidDay;
+    }
+
+    return switch (part) {
+        1 => solvePartOne.?(allocator, contents),
+        2 => solvePartTwo.?(allocator, contents),
+        else => return error.InvalidPart,
+    };
 }

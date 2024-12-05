@@ -1,4 +1,5 @@
 const std = @import("std");
+const ArrayList = std.ArrayList;
 
 const target: []const u8 = "XMAS";
 const dummy_char: u8 = 'n';
@@ -18,10 +19,6 @@ const example: []const u8 =
 const first_example_answer: i64 = 18;
 const second_example_answer: i64 = 9;
 
-var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-const allocator = gpa.allocator();
-const ArrayList = std.ArrayList;
-
 test "part one" {
     const answer = try solvePartOne(example);
     try std.testing.expectEqual(answer, first_example_answer);
@@ -32,12 +29,13 @@ test "part two" {
     try std.testing.expectEqual(answer, second_example_answer);
 }
 
-pub fn solvePartOne(input: []const u8) !i64 {
+pub fn solvePartOne(allocator: std.mem.Allocator, input: []const u8) !i64 {
     var total: i64 = 0;
     var i: usize = 0;
     const width = std.mem.indexOfScalar(u8, input, '\n').?;
     const size = std.mem.replacementSize(u8, input, "\n", "");
     const input_clean = try allocator.alloc(u8, size);
+    defer allocator.free(input_clean);
     _ = std.mem.replace(u8, input, "\n", "", input_clean);
     while (i < input_clean.len) {
         if (input_clean[i] == 'X') {
@@ -115,12 +113,13 @@ pub fn solvePartOne(input: []const u8) !i64 {
     return total;
 }
 
-pub fn solvePartTwo(input: []const u8) !i64 {
+pub fn solvePartTwo(allocator: std.mem.Allocator, input: []const u8) !i64 {
     var total: i64 = 0;
     var i: usize = 0;
     const width = std.mem.indexOfScalar(u8, input, '\n').?;
     const size = std.mem.replacementSize(u8, input, "\n", "");
     const input_clean = try allocator.alloc(u8, size);
+    defer allocator.free(input_clean);
     _ = std.mem.replace(u8, input, "\n", "", input_clean);
     while (i < input_clean.len) {
         if (input_clean[i] == 'A') {
@@ -147,17 +146,11 @@ pub fn solvePartTwo(input: []const u8) !i64 {
 
             const x: [4]u8 = .{ up_left, down_left, down_right, up_right };
             // std.debug.print("{s} at [{d},{d}]\n", .{ x, i % width, i / width });
-            if (std.mem.eql(u8, &x, "MMSS")) {
-                total += 1;
-            }
-            if (std.mem.eql(u8, &x, "SSMM")) {
-                total += 1;
-            }
-            if (std.mem.eql(u8, &x, "MSSM")) {
-                total += 1;
-            }
-            if (std.mem.eql(u8, &x, "SMMS")) {
-                total += 1;
+            const patterns = [_][4]u8{ .{ 'M', 'M', 'S', 'S' }, .{ 'S', 'S', 'M', 'M' }, .{ 'M', 'S', 'S', 'M' }, .{ 'S', 'M', 'M', 'S' } };
+            inline for (patterns) |pattern| {
+                if (std.mem.eql(u8, &x, &pattern)) {
+                    total += 1;
+                }
             }
             i += 1;
         } else {

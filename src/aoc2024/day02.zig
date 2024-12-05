@@ -1,4 +1,6 @@
 const std = @import("std");
+const ArrayList = std.ArrayList;
+
 const example: []const u8 =
     \\7 6 4 2 1
     \\1 2 7 8 9
@@ -9,10 +11,6 @@ const example: []const u8 =
 ;
 const first_example_answer: i64 = 2;
 const second_example_answer: i64 = 4;
-
-var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-const allocator = gpa.allocator();
-const ArrayList = std.ArrayList;
 
 test "part one" {
     const answer = try solvePartOne(example);
@@ -34,7 +32,7 @@ fn toDirection(diff: i64) Direction {
     }
 }
 
-fn parseLineToArrayList(line: []const u8) !std.ArrayList(i64) {
+fn parseLineToArrayList(allocator: std.mem.Allocator, line: []const u8) !std.ArrayList(i64) {
     var levels = std.ArrayList(i64).init(allocator);
     var level_strs = std.mem.tokenizeScalar(u8, line, ' ');
     while (level_strs.next()) |level_str| {
@@ -73,7 +71,7 @@ fn verifyLevels(levels: std.ArrayList(i64)) LevelResult {
     return LevelResult{ .success = true };
 }
 
-pub fn solvePartOne(input: []const u8) !i64 {
+pub fn solvePartOne(allocator: std.mem.Allocator, input: []const u8) !i64 {
     var safe_rows: i64 = 0;
     var lines = std.mem.splitScalar(u8, input, '\n');
     while (lines.next()) |line| {
@@ -81,7 +79,7 @@ pub fn solvePartOne(input: []const u8) !i64 {
             // ignore empty
             continue;
         }
-        const levels = try parseLineToArrayList(line);
+        const levels = try parseLineToArrayList(allocator, line);
         switch (verifyLevels(levels)) {
             .success => safe_rows += 1,
             .failed => {},
@@ -90,7 +88,7 @@ pub fn solvePartOne(input: []const u8) !i64 {
     return safe_rows;
 }
 
-pub fn solvePartTwo(input: []const u8) !i64 {
+pub fn solvePartTwo(allocator: std.mem.Allocator, input: []const u8) !i64 {
     var safe_rows: i64 = 0;
     var lines = std.mem.splitScalar(u8, input, '\n');
     while (lines.next()) |line| {
@@ -98,7 +96,7 @@ pub fn solvePartTwo(input: []const u8) !i64 {
             // ignore empty
             continue;
         }
-        var levels = try parseLineToArrayList(line);
+        var levels = try parseLineToArrayList(allocator, line);
         switch (verifyLevels(levels)) {
             .success => safe_rows += 1,
             .failed => {

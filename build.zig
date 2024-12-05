@@ -15,6 +15,12 @@ pub fn build(b: *std.Build) void {
     // set a preferred release mode, allowing the user to decide how to optimize.
     const optimize = b.standardOptimizeOption(.{});
 
+    // Add clap
+    const clap = b.dependency("clap", .{});
+    // Add zbench
+    const opts = .{ .target = target, .optimize = optimize };
+    const zbench_module = b.dependency("zbench", opts).module("zbench");
+
     const exe = b.addExecutable(.{
         .name = "advent-of-code",
         .root_source_file = b.path("src/main.zig"),
@@ -22,9 +28,8 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    // Add clap as dependency for exe
-    const clap = b.dependency("clap", .{});
     exe.root_module.addImport("clap", clap.module("clap"));
+    exe.root_module.addImport("zbench", zbench_module);
 
     // This declares intent for the executable to be installed into the
     // standard location when the user invokes the "install" step (the default

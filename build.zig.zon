@@ -27,6 +27,10 @@
             .url = "git+https://github.com/Hejsil/zig-clap#560c8dd72ab25d556123846254040c5bf9ad3ba4",
             .hash = "12200abadc141099ff2ba5098f7eca9bf84d548dd92ec5827ef323d813d59b049780",
         },
+        .zbench = .{
+            .url = "https://github.com/lateefj/zBench/archive/refs/heads/lateefj/0_14_0-typeinfo.zip",
+            .hash = "1220a7a9fd016fac2e973e6b3baa489fcddeef5fa2459091d73236f8924a0b78a730",
+        },
     },
     .paths = .{
         "build.zig",

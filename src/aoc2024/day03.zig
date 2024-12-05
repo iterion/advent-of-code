@@ -4,10 +4,6 @@ const second_example: []const u8 = "xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,
 const first_example_answer: i64 = 161;
 const second_example_answer: i64 = 48;
 
-var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-const allocator = gpa.allocator();
-const ArrayList = std.ArrayList;
-
 test "part one" {
     const answer = try solvePartOne(example);
     try std.testing.expectEqual(answer, first_example_answer);
@@ -18,7 +14,7 @@ test "part two" {
     try std.testing.expectEqual(answer, second_example_answer);
 }
 
-pub fn solvePartOne(input: []const u8) !i64 {
+pub fn solvePartOne(_: std.mem.Allocator, input: []const u8) !i64 {
     var total: i64 = 0;
     var i: usize = 0;
     outer: while (i < input.len) {
@@ -65,7 +61,7 @@ pub fn solvePartOne(input: []const u8) !i64 {
     return total;
 }
 
-pub fn solvePartTwo(input: []const u8) !i64 {
+pub fn solvePartTwo(_: std.mem.Allocator, input: []const u8) !i64 {
     var total: i64 = 0;
     var i: usize = 0;
     var enabled: bool = true;

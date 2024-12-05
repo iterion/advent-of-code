@@ -1,4 +1,5 @@
 const std = @import("std");
+const ArrayList = std.ArrayList;
 const first_example: []const u8 =
     \\3   4
     \\4   3
@@ -10,10 +11,6 @@ const first_example: []const u8 =
 const first_example_answer: i64 = 11;
 const second_example_answer: i64 = 31;
 
-var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-const allocator = gpa.allocator();
-const ArrayList = std.ArrayList;
-
 test "part one" {
     const answer = try solvePartOne(first_example);
     try std.testing.expectEqual(answer, first_example_answer);
@@ -24,7 +21,7 @@ test "part two" {
     try std.testing.expectEqual(answer, second_example_answer);
 }
 
-pub fn solvePartOne(input: []const u8) !i64 {
+pub fn solvePartOne(allocator: std.mem.Allocator, input: []const u8) !i64 {
     var list1 = ArrayList(i64).init(allocator);
     var list2 = ArrayList(i64).init(allocator);
     defer list1.deinit();
@@ -57,7 +54,7 @@ pub fn solvePartOne(input: []const u8) !i64 {
     return sum;
 }
 
-pub fn solvePartTwo(input: []const u8) !i64 {
+pub fn solvePartTwo(allocator: std.mem.Allocator, input: []const u8) !i64 {
     var list1 = ArrayList(i64).init(allocator);
     var list2 = ArrayList(i64).init(allocator);
     defer list1.deinit();
