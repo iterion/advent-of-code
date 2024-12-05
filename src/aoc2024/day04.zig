@@ -3,7 +3,7 @@ const ArrayList = std.ArrayList;
 
 const target: []const u8 = "XMAS";
 const dummy_char: u8 = 'n';
-const dummy: [4]u8 = .{ dummy_char, dummy_char, dummy_char, dummy_char };
+const dummy: [4]u8 = @splat(dummy_char);
 const example: []const u8 =
     \\MMMSXXMASM
     \\MSAMXMSMSA

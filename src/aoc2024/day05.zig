@@ -188,7 +188,7 @@ fn checkUpdateAgainstRules(_: std.mem.Allocator, update: ArrayList(i64), rules: 
     return true;
 }
 
-pub fn fix_order(rules_and_updates: RulesAndUpdates, update: ArrayList(i64)) void {
+pub fn fixOrder(rules_and_updates: RulesAndUpdates, update: ArrayList(i64)) void {
     for (update.items, 0..) |*update_item, i| {
         if (i == 0) {
             for (update.items[i + 1 ..]) |*item| {
@@ -224,7 +224,7 @@ pub fn solvePartTwo(allocator: std.mem.Allocator, input: []const u8) !i64 {
     for (rules_and_updates.updates.items) |update| {
         if (!try checkUpdateAgainstRules(allocator, update, rules_and_updates.rules, rules_and_updates.reverse_rules)) {
             // sort the list with the rules and context of the array
-            fix_order(rules_and_updates, update);
+            fixOrder(rules_and_updates, update);
             if (!try checkUpdateAgainstRules(allocator, update, rules_and_updates.rules, rules_and_updates.reverse_rules)) {
                 std.debug.print("failed update!", .{});
             }
