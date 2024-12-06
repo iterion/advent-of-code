@@ -13,7 +13,7 @@ const example: []const u8 =
     \\......#...
 ;
 const first_example_answer: i64 = 41;
-const second_example_answer: i64 = 123;
+const second_example_answer: i64 = 6;
 
 test "part one" {
     const allocator = std.testing.allocator;
@@ -146,22 +146,52 @@ pub fn solvePartOne(allocator: std.mem.Allocator, input: []const u8) !i64 {
     var map = try parseMap(allocator, input);
     defer map.deinit();
 
+    var count: usize = 0;
     while (map.moveGuard()) {
         try visited.put(map.guard_location, {});
+        count += 1;
     }
 
     return visited.count();
 }
 
 pub fn solvePartTwo(allocator: std.mem.Allocator, input: []const u8) !i64 {
-    var visited = std.AutoHashMap(Coordinate, void).init(allocator);
+    var visited = std.AutoHashMap(Coordinate, usize).init(allocator);
     defer visited.deinit();
     var map = try parseMap(allocator, input);
     defer map.deinit();
+    const guard_start = map.guard_location;
+    const guard_start_orientation = map.guard_orientation;
 
     while (map.moveGuard()) {
-        try visited.put(map.guard_location, {});
+        const location = try visited.getOrPut(map.guard_location);
+        if (location.found_existing) {
+            location.value_ptr.* += 1;
+        } else {
+            location.value_ptr.* = 1;
+        }
     }
 
-    return visited.count();
+    // let's just stick an obstacle in all visited spaces then recheck the map
+    var iter = visited.iterator();
+    var total: i64 = 0;
+    while (iter.next()) |entry| {
+        const coord = entry.key_ptr.*;
+        map.guard_location = guard_start;
+        map.guard_orientation = guard_start_orientation;
+        try map.obstacle_coordinates.put(coord, {});
+        var count: usize = 0;
+        while (map.moveGuard()) {
+            count += 1;
+            // benchmarked iterations at 5796 for my puzzle, so 7000 is safe
+            if (count > 7000) {
+                // found loop, stop moving and inc total
+                total += 1;
+                break;
+            }
+        }
+        _ = map.obstacle_coordinates.remove(coord);
+    }
+
+    return total;
 }
