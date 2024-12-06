@@ -167,6 +167,10 @@ pub fn runDayAndPart(allocator: std.mem.Allocator, contents: []const u8, day: us
             solvePartOne = aoc2024.day05.solvePartOne;
             solvePartTwo = aoc2024.day05.solvePartTwo;
         },
+        6 => {
+            solvePartOne = aoc2024.day06.solvePartOne;
+            solvePartTwo = aoc2024.day06.solvePartTwo;
+        },
         else => return error.InvalidDay,
     }
 
