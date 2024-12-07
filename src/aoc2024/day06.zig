@@ -39,6 +39,13 @@ const Orientation = enum {
     left,
 };
 
+const UniqueStep = struct {
+    coord: Coordinate,
+    orientation: Orientation,
+};
+
+const UniqueStepOccurrences = std.AutoHashMap(UniqueStep, usize);
+
 const ObstacleCoords = std.AutoHashMap(Coordinate, void);
 
 const Map = struct {
@@ -179,18 +186,20 @@ pub fn solvePartTwo(allocator: std.mem.Allocator, input: []const u8) !i64 {
         const coord = entry.key_ptr.*;
         map.guard_location = guard_start;
         map.guard_orientation = guard_start_orientation;
-        try map.obstacle_coordinates.put(coord, {});
-        var count: usize = 0;
+        var step_occurrences = UniqueStepOccurrences.init(allocator);
+        defer step_occurrences.deinit();
+        const new_obstacle = try map.obstacle_coordinates.getOrPutValue(coord, {});
         while (map.moveGuard()) {
-            count += 1;
-            // benchmarked iterations at 5796 for my puzzle, so 7000 is safe
-            if (count > 7000) {
+            const location = try step_occurrences.getOrPut(UniqueStep{ .coord = map.guard_location, .orientation = map.guard_orientation });
+            if (location.found_existing) {
                 // found loop, stop moving and inc total
                 total += 1;
                 break;
+            } else {
+                location.value_ptr.* = 1;
             }
         }
-        _ = map.obstacle_coordinates.remove(coord);
+        _ = map.obstacle_coordinates.removeByPtr(new_obstacle.key_ptr);
     }
 
     return total;
