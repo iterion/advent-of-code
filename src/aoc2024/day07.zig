@@ -35,89 +35,91 @@ const Equation = struct {
         const operand_count = constant_count - 1;
         std.debug.print("{d}: {any} -- {d}\n", .{ self.answer, self.constants.items, operand_count });
         const allowed_operands: [2]Operand = .{ .add, .multiply };
-        var possible_operand_lists = std.ArrayList(std.ArrayList(Operand)).init(allocator);
-        for (allowed_operands) |operand| {
-            var sub_list = std.ArrayList(Operand).init(allocator);
-            try sub_list.append(operand);
-            const res = self.validateOperands(sub_list);
-            if (res == .low) {
-                try possible_operand_lists.append(sub_list);
-            } else if (operand_count == 1 and res == .correct) {
+        var current_level = std.ArrayList(std.ArrayList(Operand)).init(allocator);
+        var next_level = std.ArrayList(std.ArrayList(Operand)).init(allocator);
+
+        // Initialize current_level based on the first allowed operators
+        for (allowed_operands) |op| {
+            var seq = std.ArrayList(Operand).init(allocator);
+            try seq.append(op);
+            const res = self.validateOperands(seq);
+            if (operand_count == 1 and res == .correct) {
+                seq.deinit();
+                current_level.deinit();
+                next_level.deinit();
                 return true;
+            } else if (res == .low or res == .correct) {
+                try current_level.append(seq);
+            } else {
+                seq.deinit();
             }
         }
 
         if (operand_count == 1) {
+            // No correct solution found
+            for (current_level.items) |*seq| seq.deinit();
+            current_level.deinit();
+            next_level.deinit();
             return false;
         }
+        var operand_pos: usize = 1;
+        while (operand_pos < operand_count) {
+            const last_operand = (operand_pos == operand_count - 1);
 
-        // For each position, let's try successive values
-        var operand_position: usize = 1;
-        while (operand_position < operand_count) {
-            const last_operand = operand_position == (operand_count - 1);
-            var new_items = std.ArrayList(std.ArrayList(Operand)).init(allocator);
-            defer new_items.deinit();
-            var indexes_to_remove = std.ArrayList(usize).init(allocator);
-            defer indexes_to_remove.deinit();
-            // We need to check all of our possible paths so far
-            for (possible_operand_lists.items, 0..) |*possible_list, j| {
-                // Dynamic programming!
-                var new_list = try possible_list.clone();
-                try new_list.append(.add);
-                // std.debug.print("{any} - iter count {d}\n", .{ new_list.items, operand_position });
-                var result = self.validateOperands(new_list);
-                if (last_operand and result == EquationResult.correct) {
-                    for (possible_operand_lists.items) |*l| {
-                        l.deinit();
-                    }
-                    possible_operand_lists.deinit();
-                    return true;
-                } else if (result == EquationResult.low) {
-                    // temp storage to not modify iterated list
-                    try new_items.append(new_list);
-                } else {
-                    // otherwise do nothing since we have exceeded the answer and can't possibly make this work
-                    // but do free up memory
-                    new_list.deinit();
-                }
-                try possible_list.append(.multiply);
-                // std.debug.print("{any} - iter count {d}\n", .{ possible_list.items, operand_position });
-                result = self.validateOperands(possible_list.*);
-                if (last_operand and result == EquationResult.correct) {
-                    for (possible_operand_lists.items) |*l| {
-                        l.deinit();
-                    }
-                    possible_operand_lists.deinit();
-                    return true;
-                } else if (result == EquationResult.low) {
-                    // try new_items.append(new_list);
-                } else {
-                    // std.debug.print("should remove! {d}\n", .{j});
-                    try indexes_to_remove.append(j);
-                }
+            // Clear next_level for the upcoming expansions
+            while (next_level.items.len > 0) {
+                const item = next_level.items[next_level.items.len - 1];
+                _ = next_level.pop();
+                item.deinit();
             }
 
-            var total_removed: usize = 0;
-            for (indexes_to_remove.items) |j| {
-                // remove offsetting for items removed so far
-                // no need to sort as it's already in order
-                const possible_list = possible_operand_lists.items[j - total_removed];
-                // And, remove allocated mem
-                possible_list.deinit();
-                // in this case we need to remove this item as it's not worth calculating this branch anymore
-                _ = possible_operand_lists.swapRemove(j - total_removed);
-                total_removed += 1;
+            // Expand all current sequences
+            while (current_level.items.len > 0) {
+                const seq = current_level.items[current_level.items.len - 1];
+                _ = current_level.pop();
+
+                // For each allowed operator, clone seq, append operator, and check
+                for (allowed_operands) |op| {
+                    var new_seq = std.ArrayList(Operand).init(allocator);
+                    // copy current seq
+                    for (seq.items) |existing_op| {
+                        try new_seq.append(existing_op);
+                    }
+                    try new_seq.append(op);
+
+                    const res = self.validateOperands(new_seq);
+                    if (last_operand and res == .correct) {
+                        // Found a correct solution
+                        new_seq.deinit();
+                        seq.deinit();
+                        // Cleanup and return true
+                        for (current_level.items) |*item| item.deinit();
+                        for (next_level.items) |*item| item.deinit();
+                        current_level.deinit();
+                        next_level.deinit();
+                        return true;
+                    } else if (res == .low or res == .correct) {
+                        try next_level.append(new_seq);
+                    }
+                }
+
+                seq.deinit();
             }
 
-            // Now add new items
-            try possible_operand_lists.appendSlice(try new_items.toOwnedSlice());
-            operand_position += 1;
+            // Now move all next_level items into current_level for the next iteration
+            // Instead of popping each item individually, just swap references:
+            const temp = current_level;
+            current_level = next_level;
+            next_level = temp;
+            operand_pos += 1;
         }
-        // Dealloc everything used for computation
-        for (possible_operand_lists.items) |*possible_list| {
-            possible_list.deinit();
+
+        // After all expansions, if no correct solution found:
+        for (current_level.items) |*seq| {
+            seq.deinit();
         }
-        possible_operand_lists.deinit();
+        current_level.deinit();
+        next_level.deinit();
         return false;
     }
 
