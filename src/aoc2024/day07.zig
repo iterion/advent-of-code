@@ -30,11 +30,11 @@ const Equation = struct {
     answer: i64,
     constants: ConstantsList,
 
-    fn hasPossibleSolution(self: *Equation, allocator: std.mem.Allocator) !bool {
+    fn hasPossibleSolution(self: *Equation, allocator: std.mem.Allocator, comptime use_concat: bool) !bool {
         const constant_count = self.constants.items.len;
         const operand_count = constant_count - 1;
-        std.debug.print("{d}: {any} -- {d}\n", .{ self.answer, self.constants.items, operand_count });
-        const allowed_operands: [2]Operand = .{ .add, .multiply };
+        // std.debug.print("{d}: {any} -- {d}\n", .{ self.answer, self.constants.items, operand_count });
+        const allowed_operands = if (use_concat) [3]Operand{ .add, .multiply, .concat } else [2]Operand{ .add, .multiply };
         var current_level = std.ArrayList(std.ArrayList(Operand)).init(allocator);
         var next_level = std.ArrayList(std.ArrayList(Operand)).init(allocator);
 
@@ -42,7 +42,7 @@ const Equation = struct {
         for (allowed_operands) |op| {
             var seq = std.ArrayList(Operand).init(allocator);
             try seq.append(op);
-            const res = self.validateOperands(seq);
+            const res = try self.validateOperands(allocator, seq);
             if (operand_count == 1 and res == .correct) {
                 seq.deinit();
                 current_level.deinit();
@@ -87,7 +87,7 @@ const Equation = struct {
                     }
                     try new_seq.append(op);
 
-                    const res = self.validateOperands(new_seq);
+                    const res = try self.validateOperands(allocator, new_seq);
                     if (last_operand and res == .correct) {
                         // Found a correct solution
                         new_seq.deinit();
@@ -123,16 +123,25 @@ const Equation = struct {
         return false;
     }
 
-    fn validateOperands(self: *Equation, operands: std.ArrayList(Operand)) EquationResult {
+    fn validateOperands(self: *Equation, allocator: std.mem.Allocator, operands: std.ArrayList(Operand)) !EquationResult {
         var total: i64 = 0;
         for (operands.items, 0..) |op, i| {
             const lhs = if (i == 0) self.constants.items[i] else total;
+            const rhs = self.constants.items[i + 1];
             if (op == .multiply) {
                 // std.debug.print("{d} * {d} - {any}\n", .{ lhs, self.constants.items[i + 1], op });
-                total = lhs * self.constants.items[i + 1];
-            } else {
+                total = lhs * rhs;
+            } else if (op == .add) {
                 // std.debug.print("{d} + {d} - {any}\n", .{ lhs, self.constants.items[i + 1], op });
-                total = lhs + self.constants.items[i + 1];
+                total = lhs + rhs;
+            } else {
+                const concat_str = try std.fmt.allocPrint(
+                    allocator,
+                    "{d}{d}",
+                    .{ lhs, rhs },
+                );
+                total = try std.fmt.parseInt(i64, concat_str, 10);
+                allocator.free(concat_str);
             }
         }
         // std.debug.print("{d}\n", .{total});
@@ -169,6 +178,7 @@ const EquationResult = enum {
 const Operand = enum {
     add,
     multiply,
+    concat,
 };
 
 fn parseAllEquations(allocator: std.mem.Allocator, input: []const u8) !EquationList {
@@ -206,18 +216,28 @@ pub fn solvePartOne(allocator: std.mem.Allocator, input: []const u8) !i64 {
 
     var count: i64 = 0;
     for (equations.items) |*equation| {
-        if (try equation.hasPossibleSolution(allocator)) {
+        if (try equation.hasPossibleSolution(allocator, false)) {
             count += equation.answer;
         } else {
-            std.debug.print("NOT GUD\n", .{});
+            // std.debug.print("NOT GUD\n", .{});
         }
     }
 
     return count;
 }
 
-pub fn solvePartTwo(_: std.mem.Allocator, _: []const u8) !i64 {
-    const count: usize = 0;
+pub fn solvePartTwo(allocator: std.mem.Allocator, input: []const u8) !i64 {
+    var equations = try parseAllEquations(allocator, input);
+    defer deinit_equations(&equations);
+
+    var count: i64 = 0;
+    for (equations.items) |*equation| {
+        if (try equation.hasPossibleSolution(allocator, true)) {
+            count += equation.answer;
+        } else {
+            // std.debug.print("NOT GUD\n", .{});
+        }
+    }
 
     return count;
 }
