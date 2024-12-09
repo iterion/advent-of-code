@@ -16,12 +16,12 @@ test "part two" {
     try std.testing.expectEqual(answer, second_example_answer);
 }
 
-const Block = union(enum) { id: usize, free: bool };
+const Block = union(enum) { id: u16, free: bool };
 
 const FileMeta = struct {
-    id: usize,
-    size: usize,
-    initial_location: usize,
+    id: u16,
+    size: u8,
+    initial_location: u32,
 };
 
 const Filesystem = struct {
@@ -34,7 +34,7 @@ const Filesystem = struct {
         var first_free: usize = 0;
 
         while (location > 0) : (location -= 1) {
-            first_free = try self.findFirstFree();
+            first_free = try self.findFirstFree(1);
             if (location < first_free) {
                 // We're now putting things on the end which we don't want
                 break;
@@ -56,7 +56,7 @@ const Filesystem = struct {
 
         while (location > 0) : (location -= 1) {
             const file = &self.file_meta.items[location];
-            first_free = self.findFirstFreeOfNBlocks(file.size) catch continue;
+            first_free = self.findFirstFree(file.size) catch continue;
             if (file.initial_location < first_free) {
                 // We're now putting things on the end which we don't want
                 continue;
@@ -84,17 +84,7 @@ const Filesystem = struct {
         return total;
     }
 
-    fn findFirstFree(self: *Filesystem) !usize {
-        for (self.layout.items, 0..) |block, i| {
-            switch (block) {
-                .id => continue,
-                .free => return i,
-            }
-        }
-        return error.NoFreeSpace;
-    }
-
-    fn findFirstFreeOfNBlocks(self: *Filesystem, size: usize) !usize {
+    fn findFirstFree(self: *Filesystem, size: usize) !usize {
         var free_index: usize = 0;
         var free_count: usize = 0;
         for (self.layout.items, 0..) |block, i| {
@@ -139,14 +129,14 @@ fn parseFilesystem(allocator: std.mem.Allocator, input: []const u8) !Filesystem 
         if (char == ' ' or char == '\n') {
             continue;
         }
-        const count = try std.fmt.parseInt(usize, &[_]u8{char}, 10);
+        const count = try std.fmt.parseInt(u8, &[_]u8{char}, 10);
         if (is_file) {
-            try file_metas.append(FileMeta{ .id = id, .size = count, .initial_location = cur_index });
+            try file_metas.append(FileMeta{ .id = @as(u16, @intCast(id)), .size = count, .initial_location = @as(u32, @intCast(cur_index)) });
         }
         for (0..count) |_| {
             cur_index += 1;
             if (is_file) {
-                try layout.append(Block{ .id = id });
+                try layout.append(Block{ .id = @as(u16, @intCast(id)) });
             } else {
                 try layout.append(Block{ .free = true });
             }
