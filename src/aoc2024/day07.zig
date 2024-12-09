@@ -12,7 +12,7 @@ const example: []const u8 =
     \\292: 11 6 16 20
 ;
 const first_example_answer: i64 = 3749;
-const second_example_answer: i64 = 6;
+const second_example_answer: i64 = 11387;
 
 test "part one" {
     const allocator = std.testing.allocator;
@@ -41,10 +41,12 @@ const Equation = struct {
         // Initialize current_level based on the first allowed operators
         for (allowed_operands) |op| {
             var seq = std.ArrayList(Operand).init(allocator);
+            errdefer seq.deinit();
             try seq.append(op);
-            const res = try self.validateOperands(allocator, seq);
+            const res = try self.validateOperands(seq);
             if (operand_count == 1 and res == .correct) {
                 seq.deinit();
+                for (current_level.items) |*other| other.deinit();
                 current_level.deinit();
                 next_level.deinit();
                 return true;
@@ -87,7 +89,7 @@ const Equation = struct {
                     }
                     try new_seq.append(op);
 
-                    const res = try self.validateOperands(allocator, new_seq);
+                    const res = try self.validateOperands(new_seq);
                     if (last_operand and res == .correct) {
                         // Found a correct solution
                         new_seq.deinit();
@@ -100,6 +102,8 @@ const Equation = struct {
                         return true;
                     } else if (res == .low or res == .correct) {
                         try next_level.append(new_seq);
+                    } else {
+                        new_seq.deinit();
                     }
                 }
 
@@ -123,7 +127,7 @@ const Equation = struct {
         return false;
     }
 
-    fn validateOperands(self: *Equation, allocator: std.mem.Allocator, operands: std.ArrayList(Operand)) !EquationResult {
+    fn validateOperands(self: *Equation, operands: std.ArrayList(Operand)) !EquationResult {
         var total: i64 = 0;
         for (operands.items, 0..) |op, i| {
             const lhs = if (i == 0) self.constants.items[i] else total;
@@ -135,13 +139,7 @@ const Equation = struct {
                 // std.debug.print("{d} + {d} - {any}\n", .{ lhs, self.constants.items[i + 1], op });
                 total = lhs + rhs;
             } else {
-                const concat_str = try std.fmt.allocPrint(
-                    allocator,
-                    "{d}{d}",
-                    .{ lhs, rhs },
-                );
-                total = try std.fmt.parseInt(i64, concat_str, 10);
-                allocator.free(concat_str);
+                total = lhs * std.math.pow(i64, 10, @as(i64, @intCast(std.math.log10(@as(usize, @intCast(rhs)) + 1)))) + rhs;
             }
         }
         // std.debug.print("{d}\n", .{total});

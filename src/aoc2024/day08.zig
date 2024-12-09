@@ -46,7 +46,7 @@ const Board = struct {
         var antinode_list = std.AutoHashMap(Coordinate, void).init(allocator);
         defer antinode_list.deinit();
         while (signal_iter.next()) |signal_entry| {
-            std.debug.print("parsing {c}'s\n", .{signal_entry.key_ptr.*});
+            // std.debug.print("parsing {c}'s\n", .{signal_entry.key_ptr.*});
             const signal_items = signal_entry.value_ptr.*.items;
             const signal_count = signal_items.len;
             // get pairs of signals
@@ -54,7 +54,7 @@ const Board = struct {
                 for ((i + 1)..signal_count) |j| {
                     const coord_1 = signal_items[i];
                     const coord_2 = signal_items[j];
-                    std.debug.print("checking {d},{d} <-> {d},{d}\n", .{ coord_1.x, coord_1.y, coord_2.x, coord_2.y });
+                    // std.debug.print("checking {d},{d} <-> {d},{d}\n", .{ coord_1.x, coord_1.y, coord_2.x, coord_2.y });
                     const x_diff = coord_1.x - coord_2.x;
                     const y_diff = coord_1.y - coord_2.y;
                     if (include_resonance) {
@@ -87,11 +87,11 @@ const Board = struct {
             }
         }
 
-        var iter = antinode_list.iterator();
-        while (iter.next()) |entry| {
-            std.debug.print("{any}\n", .{entry.key_ptr.*});
-        }
-        std.debug.print("{d},{d}\n", .{ self.x_max, self.y_max });
+        // var iter = antinode_list.iterator();
+        // while (iter.next()) |entry| {
+        // std.debug.print("{any}\n", .{entry.key_ptr.*});
+        // }
+        // std.debug.print("{d},{d}\n", .{ self.x_max, self.y_max });
         return antinode_list.count();
     }
 
