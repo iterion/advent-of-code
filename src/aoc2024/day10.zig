@@ -76,6 +76,8 @@ const Map = struct {
         defer current_paths.deinit();
         var next_paths = std.ArrayList([10]?CoordinateHeight).init(allocator);
         defer next_paths.deinit();
+        var endpoints = std.AutoHashMap(CoordinateHeight, void).init(allocator);
+        defer endpoints.deinit();
         var total_paths: i64 = 0;
         for (self.zero_locations.items) |coord| {
             var first_path: [10]?CoordinateHeight = .{null} ** 10;
@@ -109,22 +111,18 @@ const Map = struct {
                 next_paths = temp;
             }
 
-            var endpoints = std.AutoHashMap(CoordinateHeight, void).init(allocator);
             if (return_endpoints) {
                 while (current_paths.items.len > 0) {
                     const path = current_paths.pop();
                     // only need the last point
-                    const res = try endpoints.getOrPut(path[9].?);
-                    if (!res.found_existing) {
-                        // only count new paths
-                        total_paths += 1;
-                    }
+                    try endpoints.put(path[9].?, {});
                 }
+                total_paths += endpoints.count();
+                endpoints.clearRetainingCapacity();
             } else {
                 total_paths += @as(i64, @intCast(current_paths.items.len));
                 current_paths.clearRetainingCapacity();
             }
-            endpoints.deinit();
             next_paths.clearRetainingCapacity();
         }
         return total_paths;
